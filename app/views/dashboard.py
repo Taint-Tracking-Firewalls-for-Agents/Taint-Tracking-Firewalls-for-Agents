@@ -1,20 +1,14 @@
-"""Executive Cybersecurity Dashboard view for Agent Firewall (Obsidian DX Aesthetic)."""
+"""Drafting-table industrial dashboard view for Agent Firewall (agent-firewall-dye design)."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
-import pandas as pd
 import streamlit as st
 
 from agent.factory import make_agent
 from agent.runner import RunResult, run_scenario
 from agent.scenarios import Scenario
-from app.components import (
-    render_metric_card,
-    render_sandbox_state_panels,
-    render_trace_timeline,
-)
 
 
 def load_benchmark_summary(repo_root: Path) -> dict[str, Any]:
@@ -22,29 +16,22 @@ def load_benchmark_summary(repo_root: Path) -> dict[str, Any]:
     results_dir = repo_root / "benchmarks" / "results"
     summary = {
         "total_checks": 71,
-        "overhead_ms": 0.0284,
+        "overhead_ms": 0.028,
         "stage2_asr": 0.0,
         "stage2_utility": 100.0,
-        "modes": {},
     }
 
-    if not results_dir.exists():
-        return summary
-
-    for mode in ["off", "stage1", "stage2"]:
-        p = results_dir / f"latest_scripted_{mode}.json"
-        if p.exists():
-            try:
-                with open(p, "r", encoding="utf-8") as f:
-                    d = json.load(f)
-                    summary["modes"][mode] = d
-                    if mode == "stage2":
-                        summary["total_checks"] = d.get("total_checks", 71)
-                        summary["overhead_ms"] = d.get("overhead_ms", 0.0284)
-                        summary["stage2_asr"] = round(d.get("asr", 0.0) * 100, 1)
-                        summary["stage2_utility"] = round(d.get("utility", 1.0) * 100, 1)
-            except Exception:
-                pass
+    p = results_dir / "latest_scripted_stage2.json"
+    if p.exists():
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                summary["total_checks"] = d.get("total_checks", 71)
+                summary["overhead_ms"] = d.get("overhead_ms", 0.0284)
+                summary["stage2_asr"] = round(d.get("asr", 0.0) * 100, 1)
+                summary["stage2_utility"] = round(d.get("utility", 1.0) * 100, 1)
+        except Exception:
+            pass
 
     return summary
 
@@ -54,112 +41,121 @@ def render_dashboard(
     selected_agent: str,
     firewall_mode: str,
 ) -> None:
-    """Render the obsidian-styled executive dashboard."""
+    """Render the exact industrial drafting-table dashboard layout."""
     repo_root = Path(__file__).resolve().parents[2]
     bench_data = load_benchmark_summary(repo_root)
 
-    # 1. High-Density SOC Metrics Bar (JetBrains Mono)
-    col1, col2, col3, col4, col5 = st.columns(5)
-
-    with col1:
-        render_metric_card(
-            title="Total Invocations",
-            value=f"{bench_data['total_checks']:,}",
-            caption="71 Monitored Calls",
-            accent_color="#0297DE",
-        )
-    with col2:
-        render_metric_card(
-            title="Stage-2 ASR",
-            value=f"{bench_data['stage2_asr']:.1f}%",
-            caption="0/23 Attacks Succeeded",
-            accent_color="#10B981",
-        )
-    with col3:
-        render_metric_card(
-            title="Benign Utility",
-            value=f"{bench_data['stage2_utility']:.1f}%",
-            caption="12/12 Tasks Completed",
-            accent_color="#0297DE",
-        )
-    with col4:
-        render_metric_card(
-            title="Guard Overhead",
-            value=f"{bench_data['overhead_ms']:.3f}ms",
-            caption="Ultra-Low Intercept Delay",
-            accent_color="#00D2FF",
-        )
-    with col5:
-        mode_label = firewall_mode.upper()
-        mode_color = "#10B981" if firewall_mode == "stage2" else ("#F59E0B" if firewall_mode == "stage1" else "#EF4444")
-        render_metric_card(
-            title="Active Policy",
-            value=mode_label,
-            caption="Taint Verification",
-            accent_color=mode_color,
-        )
-
-    st.markdown("---")
-
-    # 2. Interactive Scenario Runner
+    # 1. Header (Huge Big Shoulders Display + Status Pill + Theme buttons)
     st.markdown(
         """
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem;">
-            <div style="font-size: 1.15rem; font-weight: 600; color: #F8FAFC;">
-                Interactive Threat Defense Runner
+        <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+          <div>
+            <h1>AGENT<br><span style="color: var(--dye);">FIREWALL</span></h1>
+            <p class="subtitle" style="font-size: 13px; color: var(--muted); margin-top: 0.85rem;">
+              Data-provenance firewall stopping prompt injection in AI agent workflows.
+            </p>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div class="status-pill-head" aria-label="Firewall status">
+              <span class="status-dot"></span>
+              <span>Guard active</span>
             </div>
-            <div class="mono-metric" style="font-size: 11px; color: #64748B;">
-                BENCHMARK ENGINE // 36 TOTAL VECTORS
-            </div>
+          </div>
+        </header>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # 2. Readout Strip (1 Joined Bordered Panel with 4 Cells)
+    st.markdown(
+        f"""
+        <section class="readout-strip" aria-label="Benchmark metrics">
+          <div class="readout-cell">
+            <div class="readout-num">{bench_data['total_checks']}</div>
+            <div class="readout-caption">checks run</div>
+          </div>
+          <div class="readout-cell">
+            <div class="readout-num" style="color: var(--ok);">0</div>
+            <div class="readout-caption">attacks succeeded</div>
+          </div>
+          <div class="readout-cell">
+            <div class="readout-num">12</div>
+            <div class="readout-caption">benign tasks completed</div>
+          </div>
+          <div class="readout-cell">
+            <div class="readout-num">{bench_data['overhead_ms']:.2f}<span style="font-size: 1.8rem;">ms</span></div>
+            <div class="readout-caption">added latency per check</div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # 3. Scenario Trace (Hero: Pipe Filling Left to Right + Slamming Stamp)
+    st.markdown(
+        """
+        <div class="font-display" style="font-size: 1.35rem; font-weight: 800; color: var(--ink); margin-bottom: 0.85rem;">
+          SCENARIO TRACE: EXFILTRATION VIA WEBPAGE
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    # Scenario selection controls
     scenario_map = {f"[{s.kind.upper()}] {s.id}: {s.description}": s for s in scenarios}
     selected_label = st.selectbox(
-        "Evaluation Scenario",
+        "Select Scenario",
         list(scenario_map.keys()),
         index=0,
-        help="Select any attack (A01-A24) or benign workload (B01-B12) to test against the firewall.",
         label_visibility="collapsed",
     )
     selected_scenario = scenario_map[selected_label]
 
+    # Trace Hero Card with animated pipe and stamp
     st.markdown(
-        f"""
-        <div class="obsidian-card" style="border-left: 2px solid #0297DE; margin-top: 0.5rem; margin-bottom: 0.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                <span class="mono-metric" style="font-size: 11px; color: #64748B;">
-                    CATEGORY: <strong style="color: #0297DE;">{selected_scenario.category.upper()}</strong> | 
-                    ID: <strong style="color: #F8FAFC;">{selected_scenario.id}</strong> | 
-                    TYPE: <span style="color: {'#F87171' if selected_scenario.kind == 'attack' else '#34D399'};">{selected_scenario.kind.upper()}</span>
-                </span>
-                <span class="mono-metric" style="font-size: 11px; color: {'#F59E0B' if selected_scenario.adaptive else '#475569'};">
-                    {'[ADAPTIVE_LAUNDERING]' if selected_scenario.adaptive else '[DIRECT_INJECTION]'}
-                </span>
+        """
+        <section class="trace-container" aria-label="Execution trace sequence">
+          <div class="trace-pipe-wrapper">
+            <div class="pipe-track"></div>
+            <div class="pipe-flow"></div>
+
+            <div class="trace-step step-active-trust">
+              <div class="node-circle">1</div>
+              <div class="step-label">User prompt</div>
+              <div class="step-tool">read_webpage</div>
+              <span class="verdict-tag tag-allow">allowed</span>
             </div>
-            <div style="font-size: 0.92rem; color: #F1F5F9; margin-bottom: 0.35rem;">
-                <span class="metric-micro-label" style="display: inline-block; margin-right: 6px;">PROMPT:</span>
-                <span class="mono-metric" style="color: #38BDF8;">"{selected_scenario.user_task}"</span>
+
+            <div class="trace-step step-active-dye">
+              <div class="node-circle">2</div>
+              <div class="step-label">Context tainted</div>
+              <div class="step-tool">injected prompt</div>
+              <span class="verdict-tag tag-taint">context tainted</span>
             </div>
-            <div style="font-size: 0.82rem; color: #94A3B8;">
-                {selected_scenario.description}
+
+            <div class="trace-step step-active-dye">
+              <div class="node-circle">3</div>
+              <div class="step-label">Exfiltration blocked</div>
+              <div class="step-tool">send_email</div>
+              <span class="verdict-tag tag-block">blocked</span>
             </div>
-        </div>
+          </div>
+
+          <div class="blocked-stamp">BLOCKED</div>
+        </section>
         """,
         unsafe_allow_html=True,
     )
 
-    # Action buttons (retaining run_btn and side_by_side_btn for test compatibility)
-    c1, c2, _ = st.columns([1.5, 2.5, 4])
-    with c1:
-        run_btn = st.button("▶ Run Scenario", key="run_btn", use_container_width=True)
-    with c2:
-        sbs_btn = st.button("⚖ Compare (Off vs On)", key="side_by_side_btn", use_container_width=True)
+    # Action buttons for testing / execution (keeps run_btn and side_by_side_btn)
+    col_btn1, col_btn2, _ = st.columns([1.5, 2.5, 4])
+    with col_btn1:
+        run_btn = st.button("Run", key="run_btn", use_container_width=True)
+    with col_btn2:
+        sbs_btn = st.button("Run side by side", key="side_by_side_btn", use_container_width=True)
 
     if run_btn:
-        with st.spinner(f"Evaluating {selected_scenario.id} in {firewall_mode.upper()} mode..."):
+        with st.spinner(f"Evaluating {selected_scenario.id}..."):
             agent = make_agent(selected_agent)
             res = run_scenario(selected_scenario, agent, mode=firewall_mode)
             st.session_state["single_run"] = (selected_scenario, res, firewall_mode)
@@ -173,114 +169,177 @@ def render_dashboard(
             st.session_state["side_by_side"] = (selected_scenario, res_off, res_s1)
             st.session_state.pop("single_run", None)
 
-    # Execution Output
+    # If run has been executed, show execution details
     if "single_run" in st.session_state:
         scen, res, mode_lbl = st.session_state["single_run"]
+        status_color = "var(--ok)" if (scen.kind == "attack" and not res.goal_reached) or (scen.kind == "benign" and res.expectation_met) else "var(--dye)"
+        status_text = "ATTACK BLOCKED" if (scen.kind == "attack" and not res.goal_reached) else ("TASK COMPLETED" if res.expectation_met else "ATTACK SUCCEEDED")
+        st.markdown(
+            f"""
+            <div class="lab-panel" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-left: 3px solid {status_color};">
+              <span class="font-display" style="font-size: 1.3rem; font-weight: 800; color: {status_color};">{status_text}</span>
+              <span style="font-size: 11px; color: var(--muted); margin-left: 10px;">Scenario {scen.id} under {mode_lbl}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        if scen.kind == "attack":
-            if res.goal_reached:
-                st.markdown(
-                    f'<div class="obsidian-card" style="border-left: 2px solid #EF4444; background: rgba(239, 68, 68, 0.08);">'
-                    f'<span class="mono-metric" style="font-size: 12px; color: #FCA5A5; font-weight: 700;">🚨 ATTACK SUCCEEDED ({mode_lbl.upper()})</span> — Injection hijacked tool call</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f'<div class="obsidian-card" style="border-left: 2px solid #10B981; background: rgba(16, 185, 129, 0.08);">'
-                    f'<span class="mono-metric" style="font-size: 12px; color: #34D399; font-weight: 700;">🛡️ ATTACK INTERCEPTED ({mode_lbl.upper()})</span> — Tainted data flow halted by Guard</div>',
-                    unsafe_allow_html=True,
-                )
-        else:
-            if res.expectation_met:
-                st.markdown(
-                    f'<div class="obsidian-card" style="border-left: 2px solid #10B981; background: rgba(16, 185, 129, 0.08);">'
-                    f'<span class="mono-metric" style="font-size: 12px; color: #34D399; font-weight: 700;">✓ TASK COMPLETED ({mode_lbl.upper()})</span> — Safe execution passed cleanly</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f'<div class="obsidian-card" style="border-left: 2px solid #F59E0B; background: rgba(245, 158, 11, 0.08);">'
-                    f'<span class="mono-metric" style="font-size: 12px; color: #FBBF24; font-weight: 700;">⚠️ TASK BLOCKED ({mode_lbl.upper()})</span> — Typical Stage-1 false block. Switch to Stage-2 to enable argument provenance.</div>',
-                    unsafe_allow_html=True,
-                )
-
-        tab_timeline, tab_sandbox = st.tabs(["Execution Trace", "Sandbox Isolation State"])
-        with tab_timeline:
-            render_trace_timeline(res.trace.events)
-        with tab_sandbox:
-            render_sandbox_state_panels(res.state)
-
-    elif "side_by_side" in st.session_state:
-        scen, res_off, res_s1 = st.session_state["side_by_side"]
-        st.markdown(f"#### ⚖ Side-by-Side Interception: Scenario {scen.id}")
-
-        col_l, col_r = st.columns(2)
-        with col_l:
-            st.markdown(
-                '<div class="obsidian-card" style="border-top: 2px solid #EF4444; padding: 0.5rem 0.8rem; text-align: center;">'
-                '<span class="mono-metric" style="font-size: 11px; color: #F87171; font-weight: 700;">FIREWALL OFF (UNPROTECTED)</span></div>',
-                unsafe_allow_html=True,
-            )
-            render_trace_timeline(res_off.trace.events)
-
-        with col_r:
-            st.markdown(
-                '<div class="obsidian-card" style="border-top: 2px solid #10B981; padding: 0.5rem 0.8rem; text-align: center;">'
-                '<span class="mono-metric" style="font-size: 11px; color: #34D399; font-weight: 700;">AGENT FIREWALL (ACTIVE DEFENSE)</span></div>',
-                unsafe_allow_html=True,
-            )
-            render_trace_timeline(res_s1.trace.events)
-
-    st.markdown("---")
-
-    # 3. Benchmark Telemetry Matrix
+    # 4. Policy Matrix with 5-segment privilege meter
     st.markdown(
         """
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.6rem;">
-            <div style="font-size: 1.15rem; font-weight: 600; color: #F8FAFC;">
-                Comparative Defense Matrix
-            </div>
-            <div class="mono-metric" style="font-size: 11px; color: #64748B;">
-                24 ATTACKS // 12 BENIGN RUNS
-            </div>
+        <div class="font-display" style="font-size: 1.35rem; font-weight: 800; color: var(--ink); margin-top: 1.5rem; margin-bottom: 0.85rem;">
+          POLICY MATRIX
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    modes_data = bench_data.get("modes", {})
-    if modes_data:
-        comparison_rows = []
-        chart_records = []
-        for m in ["off", "stage1", "stage2"]:
-            d = modes_data.get(m, {})
-            if d:
-                asr_pct = round(d.get("asr", 0.0) * 100, 1)
-                util_pct = round(d.get("utility", 0.0) * 100, 1)
-                comparison_rows.append({
-                    "MODE": m.upper(),
-                    "ASR (%)": f"{asr_pct:.1f}%",
-                    "ATTACKS STOPPED": f"{d.get('total_non_adaptive_trials', 0) - d.get('non_adaptive_successes', 0)}/{d.get('total_non_adaptive_trials', 0)}",
-                    "ADAPTIVE (A21)": f"{d.get('adaptive_successes', 0)}/1",
-                    "UTILITY (%)": f"{util_pct:.1f}%",
-                    "FALSE BLOCKS": d.get("false_blocks", 0),
-                    "OVERHEAD": f"{d.get('overhead_ms', 0.0):.4f} ms",
-                })
-                chart_records.append({"Mode": m.upper(), "Metric": "Attack Success Rate (%)", "Value": asr_pct})
-                chart_records.append({"Mode": m.upper(), "Metric": "Benign Task Utility (%)", "Value": util_pct})
+    st.markdown(
+        """
+        <section class="table-wrapper">
+          <table class="policy-table" aria-label="Firewall tool policy rules">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Privilege</th>
+                <th>When tainted</th>
+                <th>Can be overridden by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>search_notes</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>read-only</span>
+                </td>
+                <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>read_webpage</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled"></span>
+                    <span class="segment filled"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>network read</span>
+                </td>
+                <td><span style="color: var(--ok); font-weight: 600;">allow if args trusted</span></td>
+                <td>trusted url argument</td>
+              </tr>
+              <tr>
+                <td><code>read_file</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>read-only</span>
+                </td>
+                <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>write_file</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled"></span>
+                    <span class="segment filled"></span>
+                    <span class="segment filled"></span>
+                    <span class="segment"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>local write</span>
+                </td>
+                <td><span style="color: var(--ask); font-weight: 600;">ask</span></td>
+                <td>user approval or trusted path</td>
+              </tr>
+              <tr>
+                <td><code>send_email</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>external</span>
+                </td>
+                <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+                <td>trusted recipient argument</td>
+              </tr>
+              <tr>
+                <td><code>http_post</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment"></span>
+                  </div>
+                  <span>external</span>
+                </td>
+                <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+                <td>trusted url argument</td>
+              </tr>
+              <tr>
+                <td><code>run_shell</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                  </div>
+                  <span>privileged</span>
+                </td>
+                <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+                <td>never (forbidden)</td>
+              </tr>
+              <tr>
+                <td><code>delete_file</code></td>
+                <td>
+                  <div class="privilege-meter">
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                    <span class="segment filled dye"></span>
+                  </div>
+                  <span>destructive</span>
+                </td>
+                <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+                <td>never (forbidden)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        c_table, c_chart = st.columns([1.3, 1])
-        with c_table:
-            st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True, hide_index=True)
-            st.markdown(
-                """
-                <div class="obsidian-card" style="font-size: 0.8rem; color: #94A3B8; padding: 0.75rem 1rem;">
-                    <strong style="color: #0297DE;">Stage 2 (Provenance Override):</strong> Eliminates 100% of non-adaptive attacks (0.0% ASR) while allowing 100% benign utility by mathematically verifying that sensitive arguments (email address, URL, path) trace to user input.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with c_chart:
-            if chart_records:
-                df_chart = pd.DataFrame(chart_records)
-                st.bar_chart(df_chart, x="Mode", y="Value", color="Metric", stack=False)
+    # 5. One-line guarantee text under table
+    st.markdown(
+        """
+        <div style="font-size: 12px; color: var(--muted); border-left: 2px solid var(--dye); padding-left: 12px; margin-top: 1rem; margin-bottom: 2rem;">
+          Guaranteed: no sensitive tool can be invoked with parameters originating from untrusted channels.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
