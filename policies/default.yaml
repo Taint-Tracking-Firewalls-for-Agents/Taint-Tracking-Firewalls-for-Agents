@@ -1,0 +1,10 @@
+default: ask
+tools:
+  search_notes:  {tier: read_only,    tainted: allow, output_label: trusted}
+  read_webpage:  {tier: network_read, tainted: allow_if_args_trusted, output_label: untrusted, sensitive_args: [url]}
+  read_file:     {tier: read_only,    tainted: allow, output_label: from_store}
+  write_file:    {tier: local_write,  tainted: ask,   output_label: inherit, sensitive_args: [path]}
+  send_email:    {tier: external,     tainted: block, output_label: trusted, sensitive_args: [to]}
+  http_post:     {tier: external,     tainted: block, output_label: trusted, sensitive_args: [url]}
+  run_shell:     {tier: external,     tainted: block, output_label: trusted, sensitive_args: [cmd],  provenance_override: false}
+  delete_file:   {tier: external,     tainted: block, output_label: trusted, sensitive_args: [path], provenance_override: false}
