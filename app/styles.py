@@ -1,280 +1,362 @@
-"""Cybersecurity-themed CSS styling and visual tokens for Agent Firewall.
+"""Obsidian Dark Mode DX-Grade Styling System for Agent Firewall.
 
-Color Palette:
-- Midnight Black: #02070A (deep background)
-- Electric Blue: #0297DE (primary accent)
-- Deep Navy Slate: #07131B (card surface)
-- Muted Slate: #0E1E2B (secondary surface)
-- Cyan Highlight: #00D2FF
-- Text Primary: #F1F5F9
-- Text Secondary: #94A3B8
-- Border: #142E42
-- Emerald Green (Allow/Trusted): #10B981
-- Amber (Ask/Human Approval): #F59E0B
-- Crimson Red (Block/Untrusted): #EF4444
+Implements the <dashboard_aesthetics_system> guidelines:
+- Fonts: Inter (labels) + JetBrains Mono (metrics, numbers, timestamps, hashes, code)
+- Palette: 
+    * 85% Canvas: Obsidian Midnight Black (#02070A), Deep Slate (#050B10, #081119)
+    * 10% Structural: Hairline borders (rgba(255,255,255,0.08) / #132433), muted slate (#64748B)
+    * 5% Intentional Action: Electric Blue (#0297DE), Precision Cyan (#00C2FF)
+- Streamlit Padding Override: Compact, high-density padding (Linear / Bloomberg Terminal aesthetic)
+- Micro-radii (4px-6px) and razor-thin hairline borders (1px)
 """
 
 CUSTOM_CSS = """
 <style>
-/* Main app background & layout */
-.stApp {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   1. STREAMLIT GLOBAL RESET & CONTAINER PADDING OVERRIDE
+   ========================================================================== */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     background-color: #02070A !important;
-    color: #F1F5F9 !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #E2E8F0 !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header & Typography */
+/* Remove default Streamlit top gap and tighten content padding */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2.5rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1480px !important;
+}
+
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 0px !important;
+}
+
+footer {
+    display: none !important;
+}
+
+/* Atmospheric spatial depth with subtle radial lighting */
+.stApp {
+    background: radial-gradient(circle at 50% 0%, #06131D 0%, #02070A 70%) !important;
+    background-attachment: fixed !important;
+}
+
+/* ==========================================================================
+   2. TYPOGRAPHY & DATA READOUT
+   ========================================================================== */
 h1, h2, h3, h4, h5, h6 {
-    color: #F1F5F9 !important;
+    font-family: 'Inter', sans-serif !important;
+    color: #F8FAFC !important;
+    letter-spacing: -0.025em !important;
     font-weight: 600 !important;
-    letter-spacing: -0.02em;
 }
 
 h1 {
-    font-size: 2.1rem !important;
-    border-bottom: 1px solid #142E42;
-    padding-bottom: 0.6rem;
-    margin-bottom: 1.2rem;
+    font-size: 1.75rem !important;
+    margin-bottom: 0.8rem !important;
 }
 
-/* Electric Blue Glow & Accents */
-.cyber-glow {
-    text-shadow: 0 0 12px rgba(2, 151, 222, 0.45);
+h2 {
+    font-size: 1.35rem !important;
+    margin-top: 1.2rem !important;
+    margin-bottom: 0.6rem !important;
 }
 
-.electric-text {
-    color: #0297DE !important;
-    font-weight: 600;
+h3 {
+    font-size: 1.1rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 0.5rem !important;
 }
 
-/* Custom Card Container */
-.cyber-card {
-    background: linear-gradient(145deg, #07131B 0%, #0A1B27 100%);
-    border: 1px solid #142E42;
-    border-radius: 10px;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+/* JetBrains Mono applied strictly to all metrics, code, timestamps, and tags */
+.mono-metric, 
+.metric-value, 
+code, 
+pre, 
+.badge-code, 
+.timestamp, 
+.rule-tag {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-feature-settings: "zero" 1, "tnum" 1 !important;
 }
 
-.cyber-card:hover {
-    border-color: #0297DE;
-    box-shadow: 0 4px 24px rgba(2, 151, 222, 0.15);
-}
-
-/* Metric Display Card */
-.metric-box {
-    background: #07131B;
-    border: 1px solid #142E42;
-    border-top: 3px solid #0297DE;
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    text-align: left;
-}
-
-.metric-title {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #94A3B8;
-    margin-bottom: 0.3rem;
-}
-
-.metric-value {
-    font-size: 1.85rem;
-    font-weight: 700;
-    color: #F1F5F9;
-    line-height: 1.2;
-}
-
-.metric-caption {
-    font-size: 0.8rem;
-    color: #0297DE;
-    margin-top: 0.3rem;
-}
-
-/* Security Status Badges - Accessible with both icons and colors */
-.badge-trusted {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(16, 185, 129, 0.15);
-    color: #10B981;
-    border: 1px solid #10B981;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.badge-untrusted {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(239, 68, 68, 0.15);
-    color: #EF4444;
-    border: 1px solid #EF4444;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.badge-allow {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(2, 151, 222, 0.15);
-    color: #0297DE;
-    border: 1px solid #0297DE;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.badge-block {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(239, 68, 68, 0.2);
-    color: #F87171;
-    border: 1px solid #EF4444;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.badge-ask {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(245, 158, 11, 0.18);
-    color: #FBBF24;
-    border: 1px solid #F59E0B;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-/* Event timeline styling */
-.timeline-item {
-    border-left: 2px solid #142E42;
-    padding-left: 1rem;
-    margin-left: 0.5rem;
-    margin-bottom: 0.9rem;
+/* ==========================================================================
+   3. OBSIDIAN CARD SURFACE & HAIRLINE BORDERS
+   ========================================================================== */
+.obsidian-card {
+    background: #050B10;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0.85rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
     position: relative;
 }
 
-.timeline-item::before {
-    content: "";
-    position: absolute;
-    left: -5px;
-    top: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #0297DE;
+.obsidian-card:hover {
+    border-color: rgba(2, 151, 222, 0.4);
+    background: #071017;
 }
 
-.timeline-item.blocked::before {
-    background: #EF4444;
-    box-shadow: 0 0 8px #EF4444;
-}
-
-.timeline-item.allowed::before {
-    background: #10B981;
-}
-
-.timeline-item.tainted::before {
-    background: #F59E0B;
-}
-
-/* Code & pre blocks */
-pre, code {
-    background-color: #061017 !important;
-    border: 1px solid #142E42 !important;
-    color: #E2E8F0 !important;
+/* Metric Display Card - Information Dense */
+.metric-card-dx {
+    background: #050B10;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 2px solid #0297DE;
     border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.15s ease;
 }
 
-/* Sidebar styling */
-[data-testid="stSidebar"] {
-    background-color: #07131B !important;
-    border-right: 1px solid #142E42;
+.metric-card-dx:hover {
+    border-color: rgba(2, 151, 222, 0.5);
+    background: #07111A;
 }
 
-/* Input boxes & Select boxes */
-.stSelectbox, .stTextInput, .stMultiSelect {
-    color: #F1F5F9;
-}
-
-/* Buttons */
-.stButton > button {
-    background: linear-gradient(180deg, #0297DE 0%, #0178B3 100%) !important;
-    color: #FFFFFF !important;
+.metric-micro-label {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    color: #64748B !important;
     font-weight: 600 !important;
-    border: 1px solid #00B4FF !important;
-    border-radius: 6px !important;
-    padding: 0.45rem 1.1rem !important;
-    box-shadow: 0 2px 8px rgba(2, 151, 222, 0.35) !important;
-    transition: all 0.2s ease-in-out !important;
+    margin-bottom: 0.35rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.metric-value-large {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    color: #F8FAFC !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.metric-delta-sub {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.72rem !important;
+    margin-top: 0.35rem !important;
+    color: #0297DE !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ==========================================================================
+   4. REFINED ACCESSIBLE BADGES & TAGS
+   ========================================================================== */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+.pill-trusted {
+    background: rgba(16, 185, 129, 0.08);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pill-untrusted {
+    background: rgba(239, 68, 68, 0.08);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.pill-allow {
+    background: rgba(2, 151, 222, 0.08);
+    color: #38BDF8;
+    border: 1px solid rgba(2, 151, 222, 0.3);
+}
+
+.pill-block {
+    background: rgba(239, 68, 68, 0.12);
+    color: #FCA5A5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.pill-ask {
+    background: rgba(245, 158, 11, 0.1);
+    color: #FBBF24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ==========================================================================
+   5. SIDEBAR HIERARCHY & CONTROLS
+   ========================================================================== */
+[data-testid="stSidebar"] {
+    background-color: #04080D !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-testid="stSidebar"] .block-container {
+    padding-top: 2rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+}
+
+/* Sidebar Radio Navigation */
+[data-testid="stSidebar"] .stRadio > div {
+    gap: 4px !important;
+}
+
+[data-testid="stSidebar"] .stRadio label {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 2px !important;
+    color: #94A3B8 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+}
+
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: #08121A !important;
+    color: #F1F5F9 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Active navigation item */
+[data-testid="stSidebar"] .stRadio label[data-checked="true"],
+[data-testid="stSidebar"] .stRadio input:checked + div {
+    color: #00D2FF !important;
+    font-weight: 600 !important;
+}
+
+/* ==========================================================================
+   6. HIGH-PRECISION BUTTONS & INPUT CONTROLS
+   ========================================================================== */
+.stButton > button {
+    background: #0297DE !important;
+    color: #FFFFFF !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 5px !important;
+    padding: 0.45rem 1rem !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease-in-out !important;
 }
 
 .stButton > button:hover {
-    background: linear-gradient(180deg, #02A8F5 0%, #0297DE 100%) !important;
-    box-shadow: 0 4px 14px rgba(2, 151, 222, 0.55) !important;
+    background: #02A8F5 !important;
+    border-color: #38BDF8 !important;
     transform: translateY(-1px);
 }
 
-/* Tables & Dataframes */
-[data-testid="stDataFrame"] {
-    background-color: #07131B;
-    border: 1px solid #142E42;
-    border-radius: 8px;
+.stButton > button:active {
+    transform: translateY(0);
 }
 
-/* Tab styling */
+/* Form Inputs, Selectboxes & Multiselect */
+div[data-baseweb="select"] > div,
+input, 
+textarea {
+    background-color: #050B10 !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 5px !important;
+    color: #F1F5F9 !important;
+    font-size: 0.85rem !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+div[data-baseweb="select"] > div:hover {
+    border-color: rgba(2, 151, 222, 0.4) !important;
+}
+
+/* Dataframe & Tables */
+[data-testid="stDataFrame"] {
+    background-color: #04080D !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+    overflow: hidden;
+}
+
+/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background-color: transparent;
-    border-bottom: 1px solid #142E42;
+    gap: 4px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: 2px !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-    height: 42px;
-    border-radius: 6px 6px 0px 0px;
-    background-color: #07131B;
-    color: #94A3B8;
-    border: 1px solid #142E42;
-    border-bottom: none;
-    padding: 0 16px;
-    font-weight: 500;
+    height: 36px !important;
+    border-radius: 4px 4px 0 0 !important;
+    background: transparent !important;
+    color: #64748B !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    border: 1px solid transparent !important;
+    padding: 0 14px !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: #CBD5E1 !important;
 }
 
 .stTabs [aria-selected="true"] {
-    background-color: #0D2232 !important;
-    color: #00D2FF !important;
-    border-color: #0297DE !important;
+    background: #050C12 !important;
+    color: #0297DE !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-bottom: 2px solid #0297DE !important;
-    font-weight: 600;
+    font-weight: 600 !important;
 }
 
-/* Expander styling */
+/* Code and JSON blocks */
+pre, code {
+    background-color: #030609 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 4px !important;
+    color: #38BDF8 !important;
+    font-size: 0.82rem !important;
+}
+
+/* Streamlit Expanders */
 .streamlit-expanderHeader {
-    background-color: #07131B !important;
-    border: 1px solid #142E42 !important;
-    border-radius: 6px !important;
-    color: #F1F5F9 !important;
+    background-color: #050B10 !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 5px !important;
+    color: #CBD5E1 !important;
+    font-size: 0.85rem !important;
+}
+
+.streamlit-expanderHeader:hover {
+    border-color: rgba(2, 151, 222, 0.3) !important;
+    color: #F8FAFC !important;
+}
+
+/* Horizontal Dividers */
+hr {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    margin: 1.2rem 0 !important;
 }
 </style>
 """
 
 
 def apply_theme():
-    """Inject custom CSS into Streamlit document."""
+    """Inject obsidian dark mode CSS styling system."""
     import streamlit as st
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)

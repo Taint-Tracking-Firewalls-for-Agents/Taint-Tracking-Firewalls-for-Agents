@@ -1,4 +1,4 @@
-"""Event Logs and Audit Trail view for Agent Firewall."""
+"""Event Logs and Audit Trail view for Agent Firewall (Obsidian DX Aesthetic)."""
 from __future__ import annotations
 
 import json
@@ -7,15 +7,14 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from app.components import badge_label, render_metric_card, verdict_badge
+from app.components import render_metric_card
 
 
 def get_all_benchmark_events(repo_root: Path) -> list[dict[str, Any]]:
-    """Extract flattened event logs from the benchmark results."""
+    """Extract flattened event logs from benchmark results."""
     results_dir = repo_root / "benchmarks" / "results"
     all_events = []
 
-    # Try latest stage1 run
     p = results_dir / "latest_scripted_stage1.json"
     if p.exists():
         try:
@@ -36,12 +35,11 @@ def get_all_benchmark_events(repo_root: Path) -> list[dict[str, Any]]:
 
 def render_event_logs() -> None:
     """Render the searchable audit event log viewer."""
-    st.markdown("### 📜 Real-Time Security Event & Audit Trail")
+    st.markdown("### 📜 Real-Time Security Event & Audit Stream")
     st.caption("Search, filter, and inspect granular firewall interception events, decisions, and argument provenance records.")
 
     repo_root = Path(__file__).resolve().parents[2]
 
-    # Check if there is an active session run
     session_events: list[dict[str, Any]] = []
     if "single_run" in st.session_state:
         scen, res, _ = st.session_state["single_run"]
@@ -50,8 +48,7 @@ def render_event_logs() -> None:
             ev_copy["scenario_id"] = scen.id
             session_events.append(ev_copy)
 
-    # Use session events if available, or fall back to benchmark events
-    source_label = "Active Interactive Session Run" if session_events else "Historical Benchmark Run (latest_scripted_stage1)"
+    source_label = "SESSION_TRACE" if session_events else "BENCHMARK_LOG (STAGE_1)"
     events_pool = session_events if session_events else get_all_benchmark_events(repo_root)
 
     c1, c2, c3, c4 = st.columns(4)
@@ -61,13 +58,13 @@ def render_event_logs() -> None:
     blocks_cnt = sum(1 for e in events_pool if e.get("verdict") == "BLOCK")
 
     with c1:
-        render_metric_card("Total Events", total_ev, f"Source: {source_label}", "#0297DE")
+        render_metric_card("Total Events", f"{total_ev}", f"SOURCE: {source_label}", "#0297DE")
     with c2:
-        render_metric_card("Tool Invocations", tool_calls_cnt, "Intercepted Calls", "#00D2FF")
+        render_metric_card("Tool Calls", f"{tool_calls_cnt}", "INTERCEPTED", "#00D2FF")
     with c3:
-        render_metric_card("Firewall Decisions", decisions_cnt, "Evaluated by Policy", "#38BDF8")
+        render_metric_card("Decisions", f"{decisions_cnt}", "EVALUATED", "#38BDF8")
     with c4:
-        render_metric_card("Blocked Threats", blocks_cnt, "Interceptions", "#EF4444")
+        render_metric_card("Blocked Threats", f"{blocks_cnt}", "INTERCEPTIONS", "#EF4444")
 
     st.markdown("---")
 
@@ -75,11 +72,11 @@ def render_event_logs() -> None:
     col_f1, col_f2, col_f3 = st.columns([1.5, 1.5, 3])
     with col_f1:
         event_types = ["ALL", "tool_call", "decision", "segment", "tool_result", "approval", "final"]
-        selected_type = st.selectbox("Filter by Event Type", event_types)
+        selected_type = st.selectbox("Event Type", event_types)
     with col_f2:
-        verdict_filter = st.selectbox("Filter by Verdict", ["ALL", "ALLOW", "BLOCK", "ASK"])
+        verdict_filter = st.selectbox("Verdict Filter", ["ALL", "ALLOW", "BLOCK", "ASK"])
     with col_f3:
-        search_query = st.text_input("Search Logs", placeholder="e.g. read_webpage, send_email, recipe, evil.example...")
+        search_query = st.text_input("Filter Keyword", placeholder="Search tool, URL, argument, rule_id...")
 
     # Apply filters
     filtered = events_pool
@@ -91,23 +88,31 @@ def render_event_logs() -> None:
         q = search_query.lower()
         filtered = [e for e in filtered if q in json.dumps(e).lower()]
 
-    st.markdown(f"**Showing {len(filtered)} matching events**")
+    st.markdown(
+        f'<div class="mono-metric" style="font-size: 11px; color: #64748B; margin-bottom: 0.5rem;">MATCHING RECORDS: {len(filtered)}</div>',
+        unsafe_allow_html=True,
+    )
 
-    # Tabular preview
     if filtered:
         rows = []
-        for e in filtered[:100]:  # Limit preview to 100 rows for performance
+        for e in filtered[:100]:
             rows.append({
-                "Scenario": e.get("scenario_id", "-"),
-                "Type": e.get("type", "-"),
-                "Name / Tool": e.get("name", e.get("rule_id", "-")),
-                "Verdict / Label": e.get("verdict", e.get("label", "-")),
-                "Details": e.get("reason", e.get("text", str(e.get("args", "-"))))[:60] + "...",
+                "SCENARIO": e.get("scenario_id", "-"),
+                "TYPE": e.get("type", "-").upper(),
+                "TOOL / RULE": e.get("name", e.get("rule_id", "-")),
+                "VERDICT / LABEL": e.get("verdict", e.get("label", "-")).upper() if e.get("verdict") or e.get("label") else "-",
+                "PAYLOAD": e.get("reason", e.get("text", str(e.get("args", "-"))))[:65] + "...",
             })
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-        # Granular event expander
-        st.markdown("#### 🔬 Detailed Event Records")
+        st.markdown(
+            """
+            <div class="metric-micro-label" style="margin-top: 1rem; margin-bottom: 0.5rem;">
+                EXPANDED AUDIT PAYLOADS (TOP 20)
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         for i, ev in enumerate(filtered[:20]):
             etype = ev.get("type", "unknown")
             header_str = f"[{ev.get('scenario_id', 'Session')}] {etype.upper()}"
