@@ -48,9 +48,6 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    # Apply industrial drafting-table stylesheet (Big Shoulders + Martian Mono)
-    apply_theme()
-
     # Sidebar: Theme & Mode Controls
     st.sidebar.markdown(
         """
@@ -67,14 +64,9 @@ def main() -> None:
         label_visibility="collapsed",
     )
     theme_val = "dark" if "Dark" in theme_choice else "light"
-    st.markdown(
-        f"""
-        <script>
-          document.documentElement.setAttribute('data-theme', '{theme_val}');
-        </script>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    # Apply industrial drafting-table stylesheet with active theme tokens
+    apply_theme(theme_val)
 
     st.sidebar.markdown(
         """
