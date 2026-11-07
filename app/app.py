@@ -1,4 +1,4 @@
-"""Agent Firewall interactive Streamlit cybersecurity platform."""
+"""Agent Firewall interactive Streamlit cybersecurity platform (Obsidian Dark Mode)."""
 from __future__ import annotations
 
 import os
@@ -31,29 +31,29 @@ def get_all_scenarios() -> tuple[list[Scenario], list[Scenario]]:
 def main() -> None:
     """Streamlit application main entrypoint."""
     st.set_page_config(
-        page_title="Agent Firewall | AI Data Provenance Defense",
+        page_title="Agent Firewall // AI Data Provenance Defense",
         page_icon="🛡️",
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
-    # Apply Midnight Black (#02070A) and Electric Blue (#0297DE) theme
+    # Apply Obsidian Dark Mode (#02070A) & JetBrains Mono typography system
     apply_theme()
 
-    # Top Brand Bar
+    # Top Brand Bar - Linear / Bloomberg Terminal aesthetic
     st.markdown(
         """
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #142E42; padding-bottom: 0.8rem; margin-bottom: 1.2rem;">
-            <div>
-                <span style="font-size: 1.6rem; font-weight: 800; color: #F1F5F9; letter-spacing: -0.02em;">
-                    🛡️ AGENT<span style="color: #0297DE;">FIREWALL</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.35rem; font-weight: 700; color: #F8FAFC; letter-spacing: -0.03em;">
+                    AGENT<span style="color: #0297DE;">FIREWALL</span>
                 </span>
-                <span style="margin-left: 12px; font-size: 0.8rem; color: #00D2FF; background: rgba(2, 151, 222, 0.15); border: 1px solid #0297DE; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
-                    AI RUNTIME TAINT TRACKING
+                <span class="mono-metric" style="font-size: 10px; color: #0297DE; background: rgba(2, 151, 222, 0.08); border: 1px solid rgba(2, 151, 222, 0.25); padding: 2px 7px; border-radius: 4px; font-weight: 600;">
+                    DATA_PROVENANCE // TAINT_TRACKING
                 </span>
             </div>
-            <div style="font-size: 0.82rem; color: #94A3B8;">
-                Evaluation Track: <strong style="color: #F1F5F9;">Guardian Tools & Usable Security</strong>
+            <div class="mono-metric" style="font-size: 11px; color: #64748B;">
+                TRACK: <span style="color: #E2E8F0; font-weight: 600;">GUARDIAN TOOLS & USABLE SECURITY</span>
             </div>
         </div>
         """,
@@ -63,10 +63,8 @@ def main() -> None:
     # Sidebar Navigation & Controls
     st.sidebar.markdown(
         """
-        <div style="margin-bottom: 1rem;">
-            <div style="font-size: 0.75rem; text-transform: uppercase; color: #0297DE; font-weight: 700; letter-spacing: 0.08em;">
-                Navigation
-            </div>
+        <div class="metric-micro-label" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+            NAVIGATION
         </div>
         """,
         unsafe_allow_html=True,
@@ -84,8 +82,8 @@ def main() -> None:
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         """
-        <div style="font-size: 0.75rem; text-transform: uppercase; color: #0297DE; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
-            Firewall Configuration
+        <div class="metric-micro-label" style="margin-bottom: 0.5rem;">
+            DEFENSE PARAMETERS
         </div>
         """,
         unsafe_allow_html=True,
@@ -93,13 +91,13 @@ def main() -> None:
 
     # Firewall Mode Selection
     firewall_mode = st.sidebar.selectbox(
-        "Firewall Mode",
+        "Enforcement Mode",
         ["stage2", "stage1", "off"],
         index=0,
         help=(
             "stage2: Taint tracking + Argument Provenance Override (Recommended, 0% ASR, 100% Utility)\n"
-            "stage1: Conservative Taint Blocking (0% ASR, 66.7% Utility due to false positives)\n"
-            "off: Firewall Disabled (100% Attack Success Rate)"
+            "stage1: Strict Taint Blocking (0% ASR, 66.7% Utility)\n"
+            "off: Firewall Disabled (100% ASR)"
         ),
     )
 
@@ -121,23 +119,26 @@ def main() -> None:
     if llm_enabled:
         st.sidebar.caption(f"Model: `{os.getenv('LLM_MODEL')}`")
     else:
-        st.sidebar.caption("LLM disabled (configure `.env` to enable live LLM)")
+        st.sidebar.markdown(
+            '<div class="mono-metric" style="font-size: 10px; color: #64748B; margin-top: 4px;">ENGINE: SCRIPTED_DETERMINISTIC</div>',
+            unsafe_allow_html=True,
+        )
 
     # Sidebar Status Card
     st.sidebar.markdown("---")
     mode_desc = {
-        "stage2": "ACTIVE (Stage 2: Provenance Override)",
-        "stage1": "ACTIVE (Stage 1: Strict Taint)",
-        "off": "DISABLED (Passthrough)",
+        "stage2": "ACTIVE (PROVENANCE OVERRIDE)",
+        "stage1": "ACTIVE (STRICT TAINT)",
+        "off": "PASSTHROUGH (OFF)",
     }
     mode_color = "#10B981" if firewall_mode == "stage2" else ("#F59E0B" if firewall_mode == "stage1" else "#EF4444")
 
     st.sidebar.markdown(
         f"""
-        <div style="background: #0A1B27; border: 1px solid #142E42; border-left: 3px solid {mode_color}; padding: 0.8rem; border-radius: 6px;">
-            <div style="font-size: 0.72rem; text-transform: uppercase; color: #94A3B8; font-weight: bold;">Defense Status</div>
-            <div style="font-size: 0.88rem; font-weight: 700; color: {mode_color}; margin-top: 2px;">{mode_desc[firewall_mode]}</div>
-            <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 4px;">Engine: <code>{selected_agent}</code></div>
+        <div class="obsidian-card" style="border-left: 2px solid {mode_color}; padding: 0.75rem 0.9rem; margin-top: 0.5rem;">
+            <div class="metric-micro-label" style="margin-bottom: 2px;">GUARD STATUS</div>
+            <div class="mono-metric" style="font-size: 11px; font-weight: 700; color: {mode_color};">{mode_desc[firewall_mode]}</div>
+            <div class="mono-metric" style="font-size: 10px; color: #64748B; margin-top: 4px;">TARGET: {selected_agent.upper()}</div>
         </div>
         """,
         unsafe_allow_html=True,
