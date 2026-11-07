@@ -39,7 +39,7 @@ def test_app_break_it_view() -> None:
     # Switch to Break It view
     radios = at.radio
     assert len(radios) > 0
-    radios[0].set_value("💥 Break It (Red Team)").run(timeout=60)
+    radios[0].set_value("Break It (Red Team)").run(timeout=60)
     assert not at.exception
 
     # Click Test Attack button

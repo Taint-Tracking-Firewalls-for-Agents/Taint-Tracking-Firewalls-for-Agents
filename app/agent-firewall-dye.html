@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Firewall // Tactical Security Cockpit</title>
+  
+  <!-- Typography: Big Shoulders Display (Headings/Numbers) & Martian Mono (Body/Data) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Martian+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. COLOR TOKENS & SYSTEM VARIABLES
+       ========================================================================== */
+    :root {
+      /* Default light mode: "Mint and navy" */
+      --bg: #CDEFE0;
+      --panel: #EAFBF3;
+      --ink: #0A2540;
+      --muted: #3F5F6E;
+      --line: rgba(10,37,64,.17);
+      --trust: #1B5FD6;
+      --dye: #E11D48;
+      --ok: #0B7A4B;
+      --ask: #9A5B00;
+      --grid: rgba(10,37,64,.06);
+      --dye-contrast: #FFFFFF;
+    }
+
+    :root[data-theme="dark"] {
+      /* Dark mode: "Ink and lime" */
+      --bg: #0A0A0F;
+      --panel: #14141C;
+      --ink: #F4F4FA;
+      --muted: #9B9BB0;
+      --line: rgba(244,244,250,.14);
+      --trust: #59A6FF;
+      --dye: #C6F432;
+      --ok: #C6F432;
+      --ask: #FFB84D;
+      --grid: rgba(244,244,250,.04);
+      --dye-contrast: #0A0A0F;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]):not([data-theme="dark"]) {
+        --bg: #0A0A0F;
+        --panel: #14141C;
+        --ink: #F4F4FA;
+        --muted: #9B9BB0;
+        --line: rgba(244,244,250,.14);
+        --trust: #59A6FF;
+        --dye: #C6F432;
+        --ok: #C6F432;
+        --ask: #FFB84D;
+        --grid: rgba(244,244,250,.04);
+        --dye-contrast: #0A0A0F;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        linear-gradient(to right, var(--grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+      background-size: 32px 32px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Keyboard focus ring */
+    *:focus-visible {
+      outline: 2px solid var(--trust);
+      outline-offset: 2px;
+    }
+
+    main {
+      max-width: 1160px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 3rem 2rem 4rem 2rem;
+    }
+
+    /* ==========================================================================
+       SECTION 1: HEADER
+       ========================================================================== */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2.5rem;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-family: 'Big Shoulders Display', sans-serif;
+      text-transform: uppercase;
+      font-weight: 800;
+      font-size: clamp(3.4rem, 7vw, 6.2rem);
+      line-height: 0.82;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    h1 .accent-word {
+      color: var(--dye);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 0.85rem;
+      max-width: 600px;
+    }
+
+    .header-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 6px 14px;
+      border-radius: 2px;
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+
+    .theme-toggle-strip {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .theme-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'Martian Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .theme-btn.active {
+      background: var(--line);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECTION 2: READOUT STRIP
+       ========================================================================== */
+    .readout-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      margin-bottom: 2.5rem;
+    }
+
+    .readout-cell {
+      padding: 1.35rem 1.6rem;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .readout-cell:last-child {
+      border-right: none;
+    }
+
+    .readout-num {
+      font-family: 'Big Shoulders Display', sans-serif;
+      font-size: 3.8rem;
+      font-weight: 800;
+      line-height: 0.85;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .readout-num.highlight-ok {
+      color: var(--ok);
+    }
+
+    .readout-caption {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    /* ==========================================================================
+       SECTION 3: SCENARIO TRACE (HERO)
+       ========================================================================== */
+    .section-title {
+      font-family: 'Big Shoulders Display', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin-bottom: 0.85rem;
+    }
+
+    .trace-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trace-pipe-wrapper {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin: 1.5rem 2.5rem 1rem 2.5rem;
+    }
+
+    /* Underlying Pipe Line */
+    .pipe-track {
+      position: absolute;
+      top: 22px;
+      left: 10%;
+      right: 10%;
+      height: 4px;
+      z-index: 1;
+      background: var(--line);
+    }
+
+    /* Animated Dual-Dye Flow Pipe */
+    .pipe-flow {
+      position: absolute;
+      top: 22px;
+      left: 10%;
+      right: 10%;
+      height: 4px;
+      z-index: 2;
+      background: linear-gradient(to right, var(--trust) 0%, var(--trust) 50%, var(--dye) 50%, var(--dye) 100%);
+      background-size: 100% 100%;
+      animation: pipeFill 2.2s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    @keyframes pipeFill {
+      0% { clip-path: inset(0 100% 0 0); }
+      100% { clip-path: inset(0 0 0 0); }
+    }
+
+    .trace-step {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 220px;
+    }
+
+    .node-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--panel);
+      border: 2px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Big Shoulders Display', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--ink);
+      margin-bottom: 0.95rem;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .step-trust .node-circle {
+      border-color: var(--trust);
+      color: var(--trust);
+    }
+
+    .step-dye .node-circle {
+      border-color: var(--dye);
+      color: var(--dye);
+    }
+
+    .step-caption {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .step-tool {
+      font-family: 'Martian Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 0.55rem;
+    }
+
+    .verdict-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid currentColor;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+
+    .tag-allow { color: var(--ok); }
+    .tag-taint { color: var(--ask); }
+    .tag-block { color: var(--dye); }
+
+    /* SLAMMING BLOCKED STAMP */
+    .blocked-stamp {
+      position: absolute;
+      right: 2.5rem;
+      top: 1.5rem;
+      font-family: 'Big Shoulders Display', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--dye);
+      border: 4px solid var(--dye);
+      padding: 3px 18px;
+      border-radius: 2px;
+      letter-spacing: 0.08em;
+      line-height: 0.9;
+      transform: scale(1) rotate(-7deg);
+      opacity: 1;
+      animation: stampSlam 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2.2s both;
+      pointer-events: none;
+    }
+
+    @keyframes stampSlam {
+      0% {
+        opacity: 0;
+        transform: scale(2.2) rotate(-18deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(-7deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pipe-flow {
+        animation: none !important;
+        clip-path: inset(0 0 0 0) !important;
+      }
+      .blocked-stamp {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: scale(1) rotate(-7deg) !important;
+      }
+    }
+
+    /* ==========================================================================
+       SECTION 4: POLICY MATRIX
+       ========================================================================== */
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 2px;
+      margin-bottom: 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    th {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* 5-segment privilege meter */
+    .privilege-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .meter {
+      display: inline-flex;
+      gap: 3px;
+    }
+
+    .meter-seg {
+      width: 7px;
+      height: 10px;
+      background: var(--line);
+      border-radius: 1px;
+    }
+
+    .meter-seg.on {
+      background: var(--ink);
+    }
+
+    .meter-seg.on.dye-level {
+      background: var(--dye);
+    }
+
+    /* Guarantee Text */
+    .guarantee-strip {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0.5rem 0;
+      border-left: 2px solid var(--dye);
+      padding-left: 12px;
+    }
+
+    /* ==========================================================================
+       MOBILE RESPONSIVENESS (360px+)
+       ========================================================================== */
+    @media (max-width: 768px) {
+      main {
+        padding: 1.5rem 1rem;
+      }
+
+      header {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .header-controls {
+        align-items: flex-start;
+        width: 100%;
+      }
+
+      .readout-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .readout-cell:nth-child(2) {
+        border-right: none;
+      }
+
+      .readout-cell:nth-child(1), .readout-cell:nth-child(2) {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .trace-pipe-wrapper {
+        flex-direction: column;
+        margin: 1.5rem 0;
+        gap: 2.2rem;
+        align-items: center;
+      }
+
+      .pipe-track, .pipe-flow {
+        display: none;
+      }
+
+      .blocked-stamp {
+        position: static;
+        display: inline-block;
+        margin-top: 1.25rem;
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <!-- 1. Header: Big Shoulders Title & Status -->
+    <header>
+      <div class="title-group">
+        <h1>AGENT<br><span class="accent-word">FIREWALL</span></h1>
+        <p class="subtitle">Data-provenance firewall stopping prompt injection in AI agent workflows.</p>
+      </div>
+
+      <div class="header-controls">
+        <div class="status-pill" aria-label="Firewall status">
+          <span class="status-dot"></span>
+          <span>Guard active</span>
+        </div>
+
+        <div class="theme-toggle-strip" role="group" aria-label="Theme selector">
+          <button class="theme-btn" id="btn-light" onclick="setTheme('light')">light</button>
+          <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')">dark</button>
+          <button class="theme-btn" id="btn-system" onclick="setTheme('system')">system</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Readout Strip: 1 Joined Bordered Panel -->
+    <section class="readout-strip" aria-label="Benchmark summary metrics">
+      <div class="readout-cell">
+        <div class="readout-num">71</div>
+        <div class="readout-caption">checks run</div>
+      </div>
+      <div class="readout-cell">
+        <div class="readout-num highlight-ok">0</div>
+        <div class="readout-caption">attacks succeeded</div>
+      </div>
+      <div class="readout-cell">
+        <div class="readout-num">12</div>
+        <div class="readout-caption">benign tasks completed</div>
+      </div>
+      <div class="readout-cell">
+        <div class="readout-num">0.03<span style="font-size: 2rem;">ms</span></div>
+        <div class="readout-caption">added latency per check</div>
+      </div>
+    </section>
+
+    <!-- 3. Scenario Trace: Animated Pipe & Slamming Stamp -->
+    <div class="section-title">Scenario trace: exfiltration via webpage</div>
+    <section class="trace-card" aria-label="Execution trace showing prompt injection halted">
+      
+      <div class="trace-pipe-wrapper">
+        <div class="pipe-track"></div>
+        <div class="pipe-flow"></div>
+
+        <!-- Step 1: User Prompt / Read Webpage -->
+        <div class="trace-step step-trust">
+          <div class="node-circle">1</div>
+          <div class="step-caption">User prompt</div>
+          <div class="step-tool">read_webpage</div>
+          <span class="verdict-tag tag-allow">allowed</span>
+        </div>
+
+        <!-- Step 2: Injected Payload / Context Tainted -->
+        <div class="trace-step step-dye">
+          <div class="node-circle">2</div>
+          <div class="step-caption">Context tainted</div>
+          <div class="step-tool">injected prompt</div>
+          <span class="verdict-tag tag-taint">context tainted</span>
+        </div>
+
+        <!-- Step 3: Malicious Tool Call Intercepted -->
+        <div class="trace-step step-dye">
+          <div class="node-circle">3</div>
+          <div class="step-caption">Exfiltration blocked</div>
+          <div class="step-tool">send_email</div>
+          <span class="verdict-tag tag-block">blocked</span>
+        </div>
+      </div>
+
+      <!-- Slamming Stamp -->
+      <div class="blocked-stamp">BLOCKED</div>
+    </section>
+
+    <!-- 4. Policy Matrix Table with 5-Segment Privilege Meter -->
+    <div class="section-title">Policy matrix</div>
+    <section class="table-container">
+      <table class="policy-table" aria-label="Firewall tool policy rules">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Privilege</th>
+            <th>When tainted</th>
+            <th>Can be overridden by</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>search_notes</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>read-only</span>
+              </div>
+            </td>
+            <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>read_webpage</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>network read</span>
+              </div>
+            </td>
+            <td><span style="color: var(--ok); font-weight: 600;">allow if args trusted</span></td>
+            <td>trusted url argument</td>
+          </tr>
+          <tr>
+            <td><code>read_file</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>read-only</span>
+              </div>
+            </td>
+            <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>write_file</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg on"></span>
+                  <span class="meter-seg"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>local write</span>
+              </div>
+            </td>
+            <td><span style="color: var(--ask); font-weight: 600;">ask</span></td>
+            <td>user approval or trusted path</td>
+          </tr>
+          <tr>
+            <td><code>send_email</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>external</span>
+              </div>
+            </td>
+            <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+            <td>trusted recipient argument</td>
+          </tr>
+          <tr>
+            <td><code>http_post</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg"></span>
+                </div>
+                <span>external</span>
+              </div>
+            </td>
+            <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+            <td>trusted url argument</td>
+          </tr>
+          <tr>
+            <td><code>run_shell</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                </div>
+                <span>privileged</span>
+              </div>
+            </td>
+            <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+            <td>never (forbidden)</td>
+          </tr>
+          <tr>
+            <td><code>delete_file</code></td>
+            <td>
+              <div class="privilege-wrapper">
+                <div class="meter">
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                  <span class="meter-seg on dye-level"></span>
+                </div>
+                <span>destructive</span>
+              </div>
+            </td>
+            <td><span style="color: var(--dye); font-weight: 600;">block</span></td>
+            <td>never (forbidden)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. Guarantee Text -->
+    <div class="guarantee-strip">
+      Guaranteed: no sensitive tool can be invoked with parameters originating from untrusted channels.
+    </div>
+  </main>
+
+  <script>
+    function setTheme(theme) {
+      const root = document.documentElement;
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      
+      if (theme === 'system') {
+        root.removeAttribute('data-theme');
+        document.getElementById('btn-system').classList.add('active');
+        localStorage.removeItem('agent_firewall_theme');
+      } else {
+        root.setAttribute('data-theme', theme);
+        document.getElementById(`btn-${theme}`).classList.add('active');
+        localStorage.setItem('agent_firewall_theme', theme);
+      }
+    }
+
+    // Initialize persisted theme
+    const savedTheme = localStorage.getItem('agent_firewall_theme') || 'dark';
+    setTheme(savedTheme);
+  </script>
+</body>
+</html>

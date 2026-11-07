@@ -1,362 +1,481 @@
-"""Obsidian Dark Mode DX-Grade Styling System for Agent Firewall.
+"""Industrial / drafting-table design tokens and styling for Agent Firewall.
 
-Implements the <dashboard_aesthetics_system> guidelines:
-- Fonts: Inter (labels) + JetBrains Mono (metrics, numbers, timestamps, hashes, code)
-- Palette: 
-    * 85% Canvas: Obsidian Midnight Black (#02070A), Deep Slate (#050B10, #081119)
-    * 10% Structural: Hairline borders (rgba(255,255,255,0.08) / #132433), muted slate (#64748B)
-    * 5% Intentional Action: Electric Blue (#0297DE), Precision Cyan (#00C2FF)
-- Streamlit Padding Override: Compact, high-density padding (Linear / Bloomberg Terminal aesthetic)
-- Micro-radii (4px-6px) and razor-thin hairline borders (1px)
+Mood: industrial / drafting-table / lab instrument.
+Typography:
+- Display: 'Big Shoulders Display' (weights 600, 800)
+- Body & Data: 'Martian Mono' (weights 400, 600)
+Theme Tokens:
+- Light: 'Mint and navy'
+- Dark: 'Ink and lime'
 """
 
-CUSTOM_CSS = """
+DYE_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Martian+Mono:wght@400;600&display=swap');
 
 /* ==========================================================================
-   1. STREAMLIT GLOBAL RESET & CONTAINER PADDING OVERRIDE
+   1. COLOR TOKENS & SYSTEM VARIABLES
    ========================================================================== */
-html, body, [class*="css"] {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    background-color: #02070A !important;
-    color: #E2E8F0 !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+:root {
+  /* Default to Light: Mint and navy */
+  --bg: #CDEFE0;
+  --panel: #EAFBF3;
+  --ink: #0A2540;
+  --muted: #3F5F6E;
+  --line: rgba(10,37,64,.17);
+  --trust: #1B5FD6;
+  --dye: #E11D48;
+  --ok: #0B7A4B;
+  --ask: #9A5B00;
+  --grid: rgba(10,37,64,.06);
+  --stamp-ink: #0A2540;
+  --dye-contrast: #FFFFFF;
 }
 
-/* Remove default Streamlit top gap and tighten content padding */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A0A0F;
+    --panel: #14141C;
+    --ink: #F4F4FA;
+    --muted: #9B9BB0;
+    --line: rgba(244,244,250,.14);
+    --trust: #59A6FF;
+    --dye: #C6F432;
+    --ok: #C6F432;
+    --ask: #FFB84D;
+    --grid: rgba(244,244,250,.04);
+    --stamp-ink: #0A0A0F;
+    --dye-contrast: #0A0A0F;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #CDEFE0;
+  --panel: #EAFBF3;
+  --ink: #0A2540;
+  --muted: #3F5F6E;
+  --line: rgba(10,37,64,.17);
+  --trust: #1B5FD6;
+  --dye: #E11D48;
+  --ok: #0B7A4B;
+  --ask: #9A5B00;
+  --grid: rgba(10,37,64,.06);
+  --stamp-ink: #0A2540;
+  --dye-contrast: #FFFFFF;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0A0A0F;
+  --panel: #14141C;
+  --ink: #F4F4FA;
+  --muted: #9B9BB0;
+  --line: rgba(244,244,250,.14);
+  --trust: #59A6FF;
+  --dye: #C6F432;
+  --ok: #C6F432;
+  --ask: #FFB84D;
+  --grid: rgba(244,244,250,.04);
+  --stamp-ink: #0A0A0F;
+  --dye-contrast: #0A0A0F;
+}
+
+/* ==========================================================================
+   2. GLOBAL LAYOUT & 32px GRID BACKGROUND
+   ========================================================================== */
+html, body, .stApp {
+  background-color: var(--bg) !important;
+  color: var(--ink) !important;
+  font-family: 'Martian Mono', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  background-image: 
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+  -webkit-font-smoothing: antialiased;
+}
+
 .block-container {
-    padding-top: 1.5rem !important;
-    padding-bottom: 2.5rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-    max-width: 1480px !important;
+  max-width: 1160px !important;
+  padding: 2.5rem 1.5rem !important;
+  margin: 0 auto !important;
 }
 
 header[data-testid="stHeader"] {
-    background: transparent !important;
-    height: 0px !important;
+  display: none !important;
 }
 
-footer {
-    display: none !important;
-}
-
-/* Atmospheric spatial depth with subtle radial lighting */
-.stApp {
-    background: radial-gradient(circle at 50% 0%, #06131D 0%, #02070A 70%) !important;
-    background-attachment: fixed !important;
+/* Remove default Streamlit shadows, borders & heavy rounding */
+div[data-testid="stVerticalBlock"] > div {
+  gap: 0 !important;
 }
 
 /* ==========================================================================
-   2. TYPOGRAPHY & DATA READOUT
+   3. TYPOGRAPHY
    ========================================================================== */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif !important;
-    color: #F8FAFC !important;
-    letter-spacing: -0.025em !important;
-    font-weight: 600 !important;
+.font-display {
+  font-family: 'Big Shoulders Display', sans-serif !important;
+  text-transform: uppercase !important;
+}
+
+.font-mono {
+  font-family: 'Martian Mono', monospace !important;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Big Shoulders Display', sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.01em !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 h1 {
-    font-size: 1.75rem !important;
-    margin-bottom: 0.8rem !important;
-}
-
-h2 {
-    font-size: 1.35rem !important;
-    margin-top: 1.2rem !important;
-    margin-bottom: 0.6rem !important;
-}
-
-h3 {
-    font-size: 1.1rem !important;
-    margin-top: 1rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-/* JetBrains Mono applied strictly to all metrics, code, timestamps, and tags */
-.mono-metric, 
-.metric-value, 
-code, 
-pre, 
-.badge-code, 
-.timestamp, 
-.rule-tag {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-feature-settings: "zero" 1, "tnum" 1 !important;
+  font-size: clamp(3.4rem, 8vw, 6.5rem) !important;
+  font-weight: 800 !important;
+  line-height: 0.84 !important;
 }
 
 /* ==========================================================================
-   3. OBSIDIAN CARD SURFACE & HAIRLINE BORDERS
+   4. UI COMPONENTS: READOUT STRIP, PANELS & PIPES
    ========================================================================== */
-.obsidian-card {
-    background: #050B10;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-    padding: 1.1rem 1.25rem;
-    margin-bottom: 0.85rem;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
-    position: relative;
+.lab-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  position: relative;
 }
 
-.obsidian-card:hover {
-    border-color: rgba(2, 151, 222, 0.4);
-    background: #071017;
+/* Readout Strip: 1 joined bordered panel with 4 cells */
+.readout-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  margin-bottom: 2rem;
 }
 
-/* Metric Display Card - Information Dense */
-.metric-card-dx {
-    background: #050B10;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 2px solid #0297DE;
-    border-radius: 6px;
-    padding: 0.9rem 1.1rem;
-    margin-bottom: 0.5rem;
-    transition: all 0.15s ease;
+.readout-cell {
+  padding: 1.25rem 1.5rem;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
 }
 
-.metric-card-dx:hover {
-    border-color: rgba(2, 151, 222, 0.5);
-    background: #07111A;
+.readout-cell:last-child {
+  border-right: none;
 }
 
-.metric-micro-label {
-    font-size: 10px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.12em !important;
-    color: #64748B !important;
-    font-weight: 600 !important;
-    margin-bottom: 0.35rem !important;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.readout-num {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
-.metric-value-large {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 1.85rem !important;
-    font-weight: 700 !important;
-    color: #F8FAFC !important;
-    line-height: 1.1 !important;
-    letter-spacing: -0.03em !important;
-}
-
-.metric-delta-sub {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.72rem !important;
-    margin-top: 0.35rem !important;
-    color: #0297DE !important;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.readout-caption {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 0.4rem;
 }
 
 /* ==========================================================================
-   4. REFINED ACCESSIBLE BADGES & TAGS
+   5. SCENARIO TRACE & ORCHESTRATED MOTION (HERO)
    ========================================================================== */
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    padding: 2px 7px;
-    border-radius: 4px;
-    line-height: 1.4;
+.trace-container {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 2.25rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.pill-trusted {
-    background: rgba(16, 185, 129, 0.08);
-    color: #34D399;
-    border: 1px solid rgba(16, 185, 129, 0.25);
+.trace-pipe-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 3rem 1.5rem 2.5rem 1.5rem;
 }
 
-.pill-untrusted {
-    background: rgba(239, 68, 68, 0.08);
-    color: #F87171;
-    border: 1px solid rgba(239, 68, 68, 0.25);
+/* Base track pipe background */
+.pipe-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  transform: translateY(-50%);
+  z-index: 1;
+  background: var(--line);
 }
 
-.pill-allow {
-    background: rgba(2, 151, 222, 0.08);
-    color: #38BDF8;
-    border: 1px solid rgba(2, 151, 222, 0.3);
+/* Animated Dual-Dye Flow Pipe */
+.pipe-flow {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  transform: translateY(-50%);
+  z-index: 2;
+  background: linear-gradient(to right, var(--trust) 0%, var(--trust) 50%, var(--dye) 50%, var(--dye) 100%);
+  background-size: 100% 100%;
+  animation: pipeFill 2.2s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+  clip-path: inset(0 100% 0 0);
 }
 
-.pill-block {
-    background: rgba(239, 68, 68, 0.12);
-    color: #FCA5A5;
-    border: 1px solid rgba(239, 68, 68, 0.4);
+@keyframes pipeFill {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
 }
 
-.pill-ask {
-    background: rgba(245, 158, 11, 0.1);
-    color: #FBBF24;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+.trace-step {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 200px;
+}
+
+.node-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.step-active-trust .node-circle {
+  border-color: var(--trust);
+  color: var(--trust);
+}
+
+.step-active-dye .node-circle {
+  border-color: var(--dye);
+  color: var(--dye);
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.step-tool {
+  font-family: 'Martian Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.45rem;
+}
+
+.verdict-tag {
+  display: inline-block;
+  font-family: 'Martian Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.tag-allow { color: var(--ok); }
+.tag-taint { color: var(--ask); }
+.tag-block { color: var(--dye); }
+
+/* SLAMMING BLOCKED STAMP */
+.blocked-stamp {
+  position: absolute;
+  right: 2.2rem;
+  top: 1.8rem;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--dye);
+  border: 3px solid var(--dye);
+  padding: 2px 14px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  line-height: 0.95;
+  transform: scale(1) rotate(-7deg);
+  opacity: 1;
+  animation: stampSlam 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2.2s both;
+  pointer-events: none;
+}
+
+@keyframes stampSlam {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-7deg);
+  }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .pipe-flow {
+    animation: none !important;
+    clip-path: inset(0 0 0 0) !important;
+  }
+  .blocked-stamp {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) rotate(-7deg) !important;
+  }
 }
 
 /* ==========================================================================
-   5. SIDEBAR HIERARCHY & CONTROLS
+   6. POLICY MATRIX & 5-SEGMENT PRIVILEGE METER
    ========================================================================== */
-[data-testid="stSidebar"] {
-    background-color: #04080D !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 2px;
+  margin-bottom: 1.25rem;
 }
 
-[data-testid="stSidebar"] .block-container {
-    padding-top: 2rem !important;
-    padding-left: 1.25rem !important;
-    padding-right: 1.25rem !important;
+.policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
 }
 
-/* Sidebar Radio Navigation */
-[data-testid="stSidebar"] .stRadio > div {
-    gap: 4px !important;
+.policy-table th {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
 }
 
-[data-testid="stSidebar"] .stRadio label {
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    border-radius: 5px !important;
-    padding: 6px 10px !important;
-    margin-bottom: 2px !important;
-    color: #94A3B8 !important;
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    transition: all 0.15s ease !important;
+.policy-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
 }
 
-[data-testid="stSidebar"] .stRadio label:hover {
-    background: #08121A !important;
-    color: #F1F5F9 !important;
-    border-color: rgba(255, 255, 255, 0.06) !important;
+.policy-table tr:last-child td {
+  border-bottom: none;
 }
 
-/* Active navigation item */
-[data-testid="stSidebar"] .stRadio label[data-checked="true"],
-[data-testid="stSidebar"] .stRadio input:checked + div {
-    color: #00D2FF !important;
-    font-weight: 600 !important;
+/* 5-segment privilege meter */
+.privilege-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 8px;
+}
+
+.segment {
+  width: 7px;
+  height: 9px;
+  background: var(--line);
+  border-radius: 1px;
+}
+
+.segment.filled {
+  background: var(--ink);
+}
+
+.segment.filled.dye {
+  background: var(--dye);
+}
+
+/* Status Pill */
+.status-pill-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+/* Theme Switcher */
+.theme-switch-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: 'Martian Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.theme-switch-btn:focus-visible {
+  outline: 2px solid var(--trust);
 }
 
 /* ==========================================================================
-   6. HIGH-PRECISION BUTTONS & INPUT CONTROLS
+   7. MOBILE RESPONSIVENESS (360px+)
    ========================================================================== */
-.stButton > button {
-    background: #0297DE !important;
-    color: #FFFFFF !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.02em !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 5px !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: none !important;
-    transition: all 0.15s ease-in-out !important;
-}
+@media (max-width: 768px) {
+  .readout-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .readout-cell:nth-child(2) {
+    border-right: none;
+  }
+  .readout-cell:nth-child(1), .readout-cell:nth-child(2) {
+    border-bottom: 1px solid var(--line);
+  }
 
-.stButton > button:hover {
-    background: #02A8F5 !important;
-    border-color: #38BDF8 !important;
-    transform: translateY(-1px);
-}
+  .trace-pipe-wrapper {
+    flex-direction: column;
+    margin: 1.5rem 0;
+    gap: 2rem;
+  }
 
-.stButton > button:active {
-    transform: translateY(0);
-}
+  .pipe-track, .pipe-flow {
+    display: none;
+  }
 
-/* Form Inputs, Selectboxes & Multiselect */
-div[data-baseweb="select"] > div,
-input, 
-textarea {
-    background-color: #050B10 !important;
-    border: 1px solid rgba(255, 255, 255, 0.09) !important;
-    border-radius: 5px !important;
-    color: #F1F5F9 !important;
-    font-size: 0.85rem !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-div[data-baseweb="select"] > div:hover {
-    border-color: rgba(2, 151, 222, 0.4) !important;
-}
-
-/* Dataframe & Tables */
-[data-testid="stDataFrame"] {
-    background-color: #04080D !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 6px !important;
-    overflow: hidden;
-}
-
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    padding-bottom: 2px !important;
-}
-
-.stTabs [data-baseweb="tab"] {
-    height: 36px !important;
-    border-radius: 4px 4px 0 0 !important;
-    background: transparent !important;
-    color: #64748B !important;
-    font-size: 0.82rem !important;
-    font-weight: 500 !important;
-    border: 1px solid transparent !important;
-    padding: 0 14px !important;
-}
-
-.stTabs [data-baseweb="tab"]:hover {
-    color: #CBD5E1 !important;
-}
-
-.stTabs [aria-selected="true"] {
-    background: #050C12 !important;
-    color: #0297DE !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-bottom: 2px solid #0297DE !important;
-    font-weight: 600 !important;
-}
-
-/* Code and JSON blocks */
-pre, code {
-    background-color: #030609 !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    border-radius: 4px !important;
-    color: #38BDF8 !important;
-    font-size: 0.82rem !important;
-}
-
-/* Streamlit Expanders */
-.streamlit-expanderHeader {
-    background-color: #050B10 !important;
-    border: 1px solid rgba(255, 255, 255, 0.07) !important;
-    border-radius: 5px !important;
-    color: #CBD5E1 !important;
-    font-size: 0.85rem !important;
-}
-
-.streamlit-expanderHeader:hover {
-    border-color: rgba(2, 151, 222, 0.3) !important;
-    color: #F8FAFC !important;
-}
-
-/* Horizontal Dividers */
-hr {
-    border-color: rgba(255, 255, 255, 0.06) !important;
-    margin: 1.2rem 0 !important;
+  .blocked-stamp {
+    position: static;
+    display: inline-block;
+    margin: 1rem auto 0 auto;
+    font-size: 1.8rem;
+  }
 }
 </style>
 """
 
 
 def apply_theme():
-    """Inject obsidian dark mode CSS styling system."""
+    """Inject industrial drafting-table stylesheet."""
     import streamlit as st
-    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    st.markdown(DYE_CSS, unsafe_allow_html=True)

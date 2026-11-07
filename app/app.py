@@ -1,4 +1,4 @@
-"""Agent Firewall interactive Streamlit cybersecurity platform (Obsidian Dark Mode)."""
+"""Agent Firewall interactive Streamlit platform (Industrial Drafting-Table Aesthetic)."""
 from __future__ import annotations
 
 import os
@@ -42,60 +42,64 @@ def get_all_scenarios() -> tuple[list[Scenario], list[Scenario]]:
 def main() -> None:
     """Streamlit application main entrypoint."""
     st.set_page_config(
-        page_title="Agent Firewall // AI Data Provenance Defense",
+        page_title="Agent Firewall // Lab Instrument Cockpit",
         page_icon="🛡️",
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
-    # Apply Obsidian Dark Mode (#02070A) & JetBrains Mono typography system
+    # Apply industrial drafting-table stylesheet (Big Shoulders + Martian Mono)
     apply_theme()
 
-    # Top Brand Bar - Linear / Bloomberg Terminal aesthetic
-    st.markdown(
+    # Sidebar: Theme & Mode Controls
+    st.sidebar.markdown(
         """
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 1.35rem; font-weight: 700; color: #F8FAFC; letter-spacing: -0.03em;">
-                    AGENT<span style="color: #0297DE;">FIREWALL</span>
-                </span>
-                <span class="mono-metric" style="font-size: 10px; color: #0297DE; background: rgba(2, 151, 222, 0.08); border: 1px solid rgba(2, 151, 222, 0.25); padding: 2px 7px; border-radius: 4px; font-weight: 600;">
-                    DATA_PROVENANCE // TAINT_TRACKING
-                </span>
-            </div>
-            <div class="mono-metric" style="font-size: 11px; color: #64748B;">
-                TRACK: <span style="color: #E2E8F0; font-weight: 600;">GUARDIAN TOOLS & USABLE SECURITY</span>
-            </div>
+        <div style="font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 0.5rem; margin-bottom: 0.5rem;">
+          THEME SELECTION
         </div>
         """,
         unsafe_allow_html=True,
     )
+    theme_choice = st.sidebar.selectbox(
+        "Color Palette",
+        ["Dark (Ink & Lime)", "Light (Mint & Navy)"],
+        index=0,
+        label_visibility="collapsed",
+    )
+    theme_val = "dark" if "Dark" in theme_choice else "light"
+    st.markdown(
+        f"""
+        <script>
+          document.documentElement.setAttribute('data-theme', '{theme_val}');
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Sidebar Navigation & Controls
     st.sidebar.markdown(
         """
-        <div class="metric-micro-label" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
-            NAVIGATION
+        <div style="font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 1rem; margin-bottom: 0.5rem;">
+          NAVIGATION
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     nav_pages = [
-        "📊 Executive Dashboard",
-        "🤖 Agent Monitoring",
-        "🎯 Threat Detection",
-        "💥 Break It (Red Team)",
-        "📜 Event Logs",
-        "⚙️ Settings & Policy",
+        "Executive Dashboard",
+        "Agent Monitoring",
+        "Threat Detection",
+        "Break It (Red Team)",
+        "Event Logs",
+        "Policy & Settings",
     ]
     selected_page = st.sidebar.radio("View", nav_pages, index=0, label_visibility="collapsed")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         """
-        <div class="metric-micro-label" style="margin-bottom: 0.5rem;">
-            DEFENSE PARAMETERS
+        <div style="font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 0.5rem;">
+          ENFORCEMENT MODE
         </div>
         """,
         unsafe_allow_html=True,
@@ -103,9 +107,10 @@ def main() -> None:
 
     # Firewall Mode Selection
     firewall_mode = st.sidebar.selectbox(
-        "Enforcement Mode",
+        "Firewall Mode",
         ["stage2", "stage1", "off"],
         index=0,
+        label_visibility="collapsed",
         help=(
             "stage2: Taint tracking + Argument Provenance Override (Recommended, 0% ASR, 100% Utility)\n"
             "stage1: Strict Taint Blocking (0% ASR, 66.7% Utility)\n"
@@ -128,29 +133,16 @@ def main() -> None:
         help="Deterministic regex harness or live LLM chat completions API",
     )
 
-    if llm_enabled:
-        st.sidebar.caption(f"Model: `{os.getenv('LLM_MODEL')}`")
-    else:
-        st.sidebar.markdown(
-            '<div class="mono-metric" style="font-size: 10px; color: #64748B; margin-top: 4px;">ENGINE: SCRIPTED_DETERMINISTIC</div>',
-            unsafe_allow_html=True,
-        )
-
-    # Sidebar Status Card
+    # Status Pill in Sidebar
     st.sidebar.markdown("---")
-    mode_desc = {
-        "stage2": "ACTIVE (PROVENANCE OVERRIDE)",
-        "stage1": "ACTIVE (STRICT TAINT)",
-        "off": "PASSTHROUGH (OFF)",
-    }
-    mode_color = "#10B981" if firewall_mode == "stage2" else ("#F59E0B" if firewall_mode == "stage1" else "#EF4444")
-
     st.sidebar.markdown(
         f"""
-        <div class="obsidian-card" style="border-left: 2px solid {mode_color}; padding: 0.75rem 0.9rem; margin-top: 0.5rem;">
-            <div class="metric-micro-label" style="margin-bottom: 2px;">GUARD STATUS</div>
-            <div class="mono-metric" style="font-size: 11px; font-weight: 700; color: {mode_color};">{mode_desc[firewall_mode]}</div>
-            <div class="mono-metric" style="font-size: 10px; color: #64748B; margin-top: 4px;">TARGET: {selected_agent.upper()}</div>
+        <div style="background: var(--panel); border: 1px solid var(--line); padding: 0.75rem; border-radius: 2px;">
+          <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Guard Telemetry</div>
+          <div style="font-size: 13px; font-weight: 600; color: {'var(--ok)' if firewall_mode != 'off' else 'var(--dye)'}; margin-top: 2px;">
+            {'ACTIVE // ' + firewall_mode.upper() if firewall_mode != 'off' else 'DISABLED'}
+          </div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Engine: <code>{selected_agent}</code></div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -161,17 +153,17 @@ def main() -> None:
     all_scenarios = attacks + benign
 
     # View Routing
-    if selected_page == "📊 Executive Dashboard":
+    if selected_page == "Executive Dashboard":
         render_dashboard(all_scenarios, selected_agent, firewall_mode)
-    elif selected_page == "🤖 Agent Monitoring":
+    elif selected_page == "Agent Monitoring":
         render_agent_monitoring(selected_agent, firewall_mode)
-    elif selected_page == "🎯 Threat Detection":
+    elif selected_page == "Threat Detection":
         render_threat_detection(all_scenarios)
-    elif selected_page == "💥 Break It (Red Team)":
+    elif selected_page == "Break It (Red Team)":
         render_break_it(all_scenarios, firewall_mode)
-    elif selected_page == "📜 Event Logs":
+    elif selected_page == "Event Logs":
         render_event_logs()
-    elif selected_page == "⚙️ Settings & Policy":
+    elif selected_page == "Policy & Settings":
         render_settings(firewall_mode)
 
 
