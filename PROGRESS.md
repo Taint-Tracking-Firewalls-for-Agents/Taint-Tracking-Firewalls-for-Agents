@@ -8,3 +8,22 @@
 - [x] P6 LLM agent and replay: llm_agent.py (mock-tested only), replay.py, tests. (Completed: LLMAgent with cache/budget/retry, replay script, and all unit tests passed)
 - [x] P7 Streamlit app and AppTest. (Completed: app/app.py with Demo & Results tabs, tests/test_app.py verified with AppTest)
 - [x] P8 README and final verification: README.md with sections, full test suite run, demo run, benchmark run. (Completed: comprehensive README.md, 38/38 tests passing, demo and benchmark verified against all invariants)
+
+## Adapter Notes
+- Argument-trust check: `src/firewall/provenance.py` -> `arg_is_trusted(value, context)`
+- TaintStore: `src/firewall/labels.py` -> `TaintStore` class (`set`, `get`, `items`, `__setitem__`, `__getitem__`); paths normalized via `_normalize`
+- Sandbox.label_for_path: `src/agent/tools.py` -> `Sandbox.label_for_path(path)` (checks `taint_store`, defaults: `user/` -> `TRUSTED`, else `UNTRUSTED`)
+- Policy.evaluate: `src/firewall/policy.py` -> `Policy.evaluate(call, context, stage=1)`
+- Guard.check: `src/firewall/guard.py` -> `Guard.check(call, context)`
+- run_scenario / run_task: `src/agent/runner.py` -> `run_task(...)`, `run_scenario(...)`
+- Scenario loading: `src/agent/scenarios.py` -> `load_scenarios(directory)`
+- Streamlit app structure: `app/app.py` entrypoint with views under `app/views/` (`dashboard.py`, `agent_monitoring.py`, `threat_detection.py`, `event_logs.py`, `settings.py`), components in `app/components.py`, styles in `app/styles.py`
+
+## Upgrade Phases
+- [x] U0 Inspect and Baseline: mapped codebase in Adapter notes, verified 38/38 tests passing, generated `benchmarks/results/baseline_results.md`.
+- [x] U1 Provenance Layer (behavior-preserving): pluggable v1/v2 interface, path_key, raw args to policy, test_provenance_v1.py, verified baseline parity.
+- [x] U2 Red Team, Measure v1: fuzzer families F1-F7, run_redteam.py CLI, redteam_v1.md report, tests/test_redteam.py.
+- [x] U3 Harden, Measure v2: clean, normalize_path, whole-token arg_is_trusted_v2, set DEFAULT_VERSION="v2", redteam_report.md (v1 & v2 comparison), test suite updates.
+- [x] U4 Policy Verifier: lint_policy, spec_executes, check_policy, verify_policy.py CLI, tests/test_verify.py.
+- [x] U5 Break It Tab: interactive red-team attack lab / playground in Streamlit UI, AppTest updates.
+- [x] U6 README and Final Verification: updated README, full test suite (56 tests passing), red-team and verifier verified.

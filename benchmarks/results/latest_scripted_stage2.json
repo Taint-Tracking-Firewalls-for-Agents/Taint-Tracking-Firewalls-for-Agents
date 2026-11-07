@@ -17,7 +17,7 @@
   "false_blocks": 0,
   "prompts_per_task": 0.0,
   "total_checks": 71,
-  "overhead_ms": 0.019825351814752524,
+  "overhead_ms": 0.05141831073634536,
   "attack_trials": [
     {
       "scenario_id": "A01",

@@ -7,6 +7,7 @@ import tempfile
 from typing import Any
 
 from firewall.labels import Label, TaintStore, ToolCall
+from firewall.provenance import path_key
 
 
 class ToolError(Exception):
@@ -100,14 +101,12 @@ class Sandbox:
         Defaults: under user/ TRUSTED; under inbox/, downloads/ or any other path UNTRUSTED.
         Overrides: any entry in taint_store.
         """
-        raw = str(path).replace("\\", "/").strip()
-        while raw.startswith("./"):
-            raw = raw[2:]
-        stored = self.taint_store.get(raw)
+        key = path_key(path)
+        stored = self.taint_store.get(key)
         if stored is not None:
             return Label(stored) if isinstance(stored, str) else stored
 
-        if raw.startswith("user/"):
+        if key.startswith("user/"):
             return Label.TRUSTED
         return Label.UNTRUSTED
 

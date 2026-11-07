@@ -73,7 +73,7 @@ class Policy:
         sensitive_all_trusted = (
             len(sensitive) > 0
             and all(
-                arg_is_trusted(str(call.args.get(name, "")), context)
+                arg_is_trusted(call.args.get(name), context)
                 for name in sensitive
             )
         )

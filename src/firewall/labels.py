@@ -105,19 +105,17 @@ class TaintStore:
         self._store: dict[str, Label | str] = {}
 
     @staticmethod
-    def _normalize(path: str | Path) -> str:
-        p = str(path).replace("\\", "/").strip()
-        while p.startswith("./"):
-            p = p[2:]
-        return p
+    def _key(path: str | Path) -> str:
+        from firewall.provenance import path_key
+        return path_key(path)
 
     def set(self, path: str | Path, label: Label | str) -> None:
         """Set taint label for path."""
-        self._store[self._normalize(path)] = label
+        self._store[self._key(path)] = label
 
     def get(self, path: str | Path, default: Label | str | None = None) -> Label | str | None:
         """Get taint label for path."""
-        return self._store.get(self._normalize(path), default)
+        return self._store.get(self._key(path), default)
 
     def items(self) -> list[tuple[str, Label | str]]:
         """List all path and label items."""
@@ -127,13 +125,13 @@ class TaintStore:
         self.set(path, label)
 
     def __getitem__(self, path: str | Path) -> Label | str:
-        norm = self._normalize(path)
-        if norm not in self._store:
-            raise KeyError(norm)
-        return self._store[norm]
+        k = self._key(path)
+        if k not in self._store:
+            raise KeyError(k)
+        return self._store[k]
 
     def __contains__(self, path: str | Path) -> bool:
-        return self._normalize(path) in self._store
+        return self._key(path) in self._store
 
 
 class Trace:

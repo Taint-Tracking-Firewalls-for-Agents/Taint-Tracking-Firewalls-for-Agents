@@ -5,14 +5,25 @@ import os
 from pathlib import Path
 import sys
 
-# Ensure src/ is on sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Ensure repository root and src/ are on sys.path, and clean up conflicting script dir
+_repo_root = Path(__file__).resolve().parents[1]
+_app_dir = Path(__file__).resolve().parent
+
+sys.path = [p for p in sys.path if Path(p).resolve() != _app_dir]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+if str(_repo_root / "src") not in sys.path:
+    sys.path.insert(0, str(_repo_root / "src"))
+
+if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
+    del sys.modules["app"]
 
 import streamlit as st
 
 from agent.scenarios import Scenario, load_scenarios
 from app.styles import apply_theme
 from app.views.agent_monitoring import render_agent_monitoring
+from app.views.break_it import render_break_it
 from app.views.dashboard import render_dashboard
 from app.views.event_logs import render_event_logs
 from app.views.settings import render_settings
@@ -74,6 +85,7 @@ def main() -> None:
         "📊 Executive Dashboard",
         "🤖 Agent Monitoring",
         "🎯 Threat Detection",
+        "💥 Break It (Red Team)",
         "📜 Event Logs",
         "⚙️ Settings & Policy",
     ]
@@ -155,6 +167,8 @@ def main() -> None:
         render_agent_monitoring(selected_agent, firewall_mode)
     elif selected_page == "🎯 Threat Detection":
         render_threat_detection(all_scenarios)
+    elif selected_page == "💥 Break It (Red Team)":
+        render_break_it(all_scenarios, firewall_mode)
     elif selected_page == "📜 Event Logs":
         render_event_logs()
     elif selected_page == "⚙️ Settings & Policy":
