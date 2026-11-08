@@ -151,18 +151,28 @@ def render_dashboard(
 
     if run_btn:
         with st.spinner(f"Evaluating {selected_scenario.id}..."):
-            agent = make_agent(selected_agent)
-            res = run_scenario(selected_scenario, agent, mode=firewall_mode)
-            st.session_state["single_run"] = (selected_scenario, res, firewall_mode)
-            st.session_state.pop("side_by_side", None)
+            try:
+                agent = make_agent(selected_agent)
+                res = run_scenario(selected_scenario, agent, mode=firewall_mode)
+                st.session_state["single_run"] = (selected_scenario, res, firewall_mode)
+                st.session_state.pop("side_by_side", None)
+            except ValueError as e:
+                st.error(f"⚠️ **Could not initialize '{selected_agent}' engine**: {e}\n\n"
+                         f"👉 **Fix:** If deployed on Streamlit Cloud, add `LLM_API_KEY` under **Manage App → Settings → Secrets**, "
+                         f"or switch **Agent Engine** to `scripted` in the sidebar to run the benchmark offline.")
 
     if sbs_btn:
         with st.spinner(f"Evaluating {selected_scenario.id} side-by-side..."):
-            agent = make_agent(selected_agent)
-            res_off = run_scenario(selected_scenario, agent, mode="off")
-            res_s1 = run_scenario(selected_scenario, agent, mode="stage1")
-            st.session_state["side_by_side"] = (selected_scenario, res_off, res_s1)
-            st.session_state.pop("single_run", None)
+            try:
+                agent = make_agent(selected_agent)
+                res_off = run_scenario(selected_scenario, agent, mode="off")
+                res_s1 = run_scenario(selected_scenario, agent, mode="stage1")
+                st.session_state["side_by_side"] = (selected_scenario, res_off, res_s1)
+                st.session_state.pop("single_run", None)
+            except ValueError as e:
+                st.error(f"⚠️ **Could not initialize '{selected_agent}' engine**: {e}\n\n"
+                         f"👉 **Fix:** If deployed on Streamlit Cloud, add `LLM_API_KEY` under **Manage App → Settings → Secrets**, "
+                         f"or switch **Agent Engine** to `scripted` in the sidebar to run the benchmark offline.")
 
     # If single run has been executed, show execution details and granular timeline
     if "single_run" in st.session_state:

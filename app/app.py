@@ -98,20 +98,33 @@ def main() -> None:
 
     # Ensure environment variables from repo root .env are loaded
     load_dotenv(_repo_root / ".env", override=True)
+
+    # If running on Streamlit Community Cloud, load from st.secrets
+    try:
+        if hasattr(st, "secrets"):
+            for k in ["LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "EMAIL_ACCOUNT", "EMAIL_APP_PASSWORD"]:
+                if k in st.secrets and not os.getenv(k):
+                    os.environ[k] = str(st.secrets[k])
+    except Exception:
+        pass
+
     if not os.getenv("LLM_BASE_URL"):
         os.environ["LLM_BASE_URL"] = "https://openrouter.ai/api/v1"
     if not os.getenv("LLM_MODEL"):
         os.environ["LLM_MODEL"] = "nvidia/nemotron-3.5-super-vl:free"
 
-    # Agent Engine Selection - Always offer both deterministic scripted harness and live Nemotron LLM
-    agent_options = ["scripted", "llm"]
+    # Agent Engine Selection: show both if LLM key configured, otherwise scripted with quick setup hint
+    llm_ready = bool(os.getenv("LLM_API_KEY"))
+    agent_options = ["scripted", "llm"] if llm_ready else ["scripted"]
 
     selected_agent = st.sidebar.selectbox(
         "Agent Engine",
         agent_options,
         index=0,
-        help="Deterministic scripted harness or live Nemotron LLM chat completions API",
+        help="Deterministic scripted harness or live Nemotron LLM completions API",
     )
+    if not llm_ready:
+        st.sidebar.caption("💡 To enable live Nemotron LLM: add `LLM_API_KEY` to `.env` or Streamlit Secrets.")
 
     # Status Pill in Sidebar
     st.sidebar.markdown("---")
