@@ -104,6 +104,12 @@ class LLMAgent:
         if self.api_key.startswith("<") and self.api_key.endswith(">"):
             self.api_key = self.api_key[1:-1]
 
+        if not self.api_key:
+            raise ValueError(
+                "Missing required environment variable: LLM_API_KEY. "
+                "Please configure LLM_API_KEY in your .env or Streamlit Secrets."
+            )
+
         self.model = model or os.getenv("LLM_MODEL", "nvidia/nemotron-3.5-super-vl:free")
         self.enable_reasoning = enable_reasoning
 
