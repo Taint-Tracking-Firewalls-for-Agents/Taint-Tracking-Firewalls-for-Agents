@@ -253,24 +253,34 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
         for e in emails:
             st.session_state["seen_email_ids"].add(str(e.get("msg_id", e["id"])))
 
-    # Auto-Shield Loop logic: check if there's any new email
+    # Auto-Shield Loop logic: check if there's any new email (evaluates BOTH scripted and LLM side-by-side)
     if auto_shield:
         try:
             fresh_emails = fetch_recent_emails(limit=5, folder=folder_option)
             new_incoming = [m for m in fresh_emails if str(m.get("msg_id", m["id"])) not in st.session_state["seen_email_ids"]]
             if new_incoming:
                 for new_mail in reversed(new_incoming):
-                    st.toast(f"⚡ New email detected in [{new_mail['folder']}] from {new_mail['from']}! Running firewall scan...", icon="🛡️")
-                    trace, state = run_firewall_on_email(new_mail, selected_agent, firewall_mode)
-                    decisions = [e for e in trace.events if e.get("type") == "decision"]
-                    blocked = any(d.get("verdict") == "BLOCK" for d in decisions)
+                    st.toast(f"⚡ New email in [{new_mail['folder']}] from {new_mail['from']}! Running dual comparison scan...", icon="🛡️")
+                    
+                    # 1. Run Scripted
+                    trace_scripted, state_scripted = run_firewall_on_email(new_mail, "scripted", firewall_mode)
+                    dec_scripted = [e for e in trace_scripted.events if e.get("type") == "decision"]
+                    blocked_scripted = any(d.get("verdict") == "BLOCK" for d in dec_scripted)
+
+                    # 2. Run LLM (if available, otherwise fallback)
+                    trace_llm, state_llm, blocked_llm, llm_err = None, None, False, None
+                    try:
+                        trace_llm, state_llm = run_firewall_on_email(new_mail, "llm", firewall_mode)
+                        dec_llm = [e for e in trace_llm.events if e.get("type") == "decision"]
+                        blocked_llm = any(d.get("verdict") == "BLOCK" for d in dec_llm)
+                    except Exception as err:
+                        llm_err = str(err)
                     
                     st.session_state["inbox_audit_log"].insert(0, {
                         "time": time.strftime("%H:%M:%S"),
                         "email": new_mail,
-                        "blocked": blocked,
-                        "trace": trace,
-                        "state": state,
+                        "scripted": {"blocked": blocked_scripted, "trace": trace_scripted, "state": state_scripted},
+                        "llm": {"blocked": blocked_llm, "trace": trace_llm, "state": state_llm, "error": llm_err},
                     })
                     st.session_state["seen_email_ids"].add(str(new_mail.get("msg_id", new_mail["id"])))
                 st.session_state["real_emails"] = fresh_emails
@@ -279,30 +289,51 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
 
     # Display Auto-Shield Audit Stream if any scans occurred
     if st.session_state["inbox_audit_log"]:
-        st.markdown("#### ⚡ Live Shield Interception Log")
+        st.markdown("#### ⚡ Live Dual-Engine Interception Log")
         for idx, entry in enumerate(st.session_state["inbox_audit_log"]):
             m = entry["email"]
-            is_blocked = entry["blocked"]
-            border_col = "var(--dye)" if is_blocked else "var(--ok)"
-            badge = "🛑 ATTACK BLOCKED" if is_blocked else "✅ SAFE EMAIL PROCESSED"
-            badge_color = "var(--dye)" if is_blocked else "var(--ok)"
+            scr = entry.get("scripted", {})
+            llm = entry.get("llm", {})
 
             st.markdown(
                 f"""
-                <div style="border-left: 4px solid {border_col}; background: var(--panel); padding: 0.85rem 1rem; margin-bottom: 0.6rem; border-radius: 3px;">
+                <div style="border-left: 4px solid var(--primary, #0297DE); background: var(--panel); padding: 0.85rem 1rem; margin-bottom: 0.8rem; border-radius: 3px;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 700; color: {badge_color}; font-size: 13px;">{badge}</span>
+                    <span style="font-weight: 700; color: var(--ink); font-size: 14px;">{m['subject']}</span>
                     <span style="font-size: 11px; color: var(--muted);">{entry['time']}</span>
                   </div>
-                  <div style="font-weight: 600; color: var(--ink); margin-top: 4px; font-size: 14px;">{m['subject']}</div>
-                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">From: <code>{m['from']}</code></div>
+                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">From: <code>{m['from']}</code> | Folder: <strong>{m.get('folder', 'Inbox')}</strong></div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-            with st.expander(f"🔍 Inspect Trace for: {m['subject'][:40]}...", expanded=(idx == 0)):
-                render_trace_timeline(entry["trace"].events)
-                render_sandbox_state_panels(entry["state"])
+
+            # Two-Column Comparison: Scripted vs LLM
+            c_left, c_right = st.columns(2)
+            with c_left:
+                scr_blocked = scr.get("blocked", False)
+                scr_color = "var(--dye)" if scr_blocked else "var(--ok)"
+                scr_badge = "🛑 ATTACK INTERCEPTED BY FIREWALL" if scr_blocked else "✅ SAFE / BENIGN"
+                st.markdown(f"**Deterministic Engine (Gullible Autonomous Baseline):**")
+                st.markdown(f"<span style='color: {scr_color}; font-weight: 700;'>{scr_badge}</span>", unsafe_allow_html=True)
+                if scr.get("trace"):
+                    with st.expander("🔍 Scripted Engine Trace", expanded=False):
+                        render_trace_timeline(scr["trace"].events)
+                        render_sandbox_state_panels(scr["state"])
+
+            with c_right:
+                st.markdown(f"**NVIDIA Nemotron LLM (Cognitive Model):**")
+                if llm.get("error"):
+                    st.caption(f"⚠️ LLM unavailable: {llm['error']}")
+                else:
+                    llm_blocked = llm.get("blocked", False)
+                    llm_color = "var(--dye)" if llm_blocked else "var(--ok)"
+                    llm_badge = "🛑 DANGEROUS TOOL CALL BLOCKED BY FIREWALL" if llm_blocked else "✅ COGNITIVELY FILTERED / SAFE"
+                    st.markdown(f"<span style='color: {llm_color}; font-weight: 700;'>{llm_badge}</span>", unsafe_allow_html=True)
+                    if llm.get("trace"):
+                        with st.expander("🔍 Nemotron LLM Trace & Reasoning", expanded=False):
+                            render_trace_timeline(llm["trace"].events)
+                            render_sandbox_state_panels(llm["state"])
 
     st.markdown("---")
     st.markdown("#### 📥 Inspect & Test Emails across Folders")
@@ -330,16 +361,19 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
         st.text_area("Email Content", value=selected_mail["body"], height=160, disabled=True)
 
     # Action: Run firewall manually on this email
-    col_act1, _ = st.columns([2.5, 3])
+    col_act1, col_act2 = st.columns([2.5, 3])
     with col_act1:
-        run_mail_btn = st.button("🛡️ Test Agent & Firewall on this Email", key="run_mail_btn", use_container_width=True)
+        run_mail_btn = st.button("🛡️ Test Selected Agent Engine", key="run_mail_btn", use_container_width=True)
+    with col_act2:
+        run_dual_btn = st.button("⚖️ Compare Side-by-Side (Scripted vs Nemotron LLM)", key="run_dual_btn", use_container_width=True)
 
     if run_mail_btn:
         try:
-            with st.spinner("Nemotron agent reading real email under Agent Firewall protection..."):
+            with st.spinner(f"Running '{selected_agent}' on email under Agent Firewall..."):
                 trace, state = run_firewall_on_email(selected_mail, selected_agent, firewall_mode)
                 st.session_state["mail_run_trace"] = trace
                 st.session_state["mail_run_state"] = state
+                st.session_state.pop("dual_run", None)
         except ValueError as err:
             st.error(f"Cannot initialize agent: {err}")
             return
@@ -347,7 +381,79 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
             st.error(f"Execution failed: {e}")
             return
 
-    if "mail_run_trace" in st.session_state:
+    if run_dual_btn:
+        with st.spinner("Evaluating email side-by-side: Scripted (Gullible) vs Nemotron (Reasoning)..."):
+            # 1. Scripted
+            trace_scr, state_scr = run_firewall_on_email(selected_mail, "scripted", firewall_mode)
+            dec_scr = [e for e in trace_scr.events if e.get("type") == "decision"]
+            blocked_scr = any(d.get("verdict") == "BLOCK" for d in dec_scr)
+
+            # 2. LLM
+            trace_llm, state_llm, blocked_llm, llm_err = None, None, False, None
+            try:
+                trace_llm, state_llm = run_firewall_on_email(selected_mail, "llm", firewall_mode)
+                dec_llm = [e for e in trace_llm.events if e.get("type") == "decision"]
+                blocked_llm = any(d.get("verdict") == "BLOCK" for d in dec_llm)
+            except Exception as err:
+                llm_err = str(err)
+
+            st.session_state["dual_run"] = {
+                "scripted": {"trace": trace_scr, "state": state_scr, "blocked": blocked_scr},
+                "llm": {"trace": trace_llm, "state": state_llm, "blocked": blocked_llm, "error": llm_err},
+            }
+            st.session_state.pop("mail_run_trace", None)
+
+    # Render Side-by-Side Comparison if triggered
+    if "dual_run" in st.session_state:
+        d = st.session_state["dual_run"]
+        scr = d["scripted"]
+        llm = d["llm"]
+
+        st.markdown("#### ⚖️ Side-by-Side Behavioral Analysis")
+        col_s, col_l = st.columns(2)
+
+        with col_s:
+            st.markdown(
+                f"""
+                <div class="obsidian-card" style="border-top: 3px solid {'var(--dye)' if scr['blocked'] else 'var(--ok)'}; padding: 1rem;">
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--muted);">ENGINE 1: DETERMINISTIC SCRIPTED</div>
+                  <div style="font-size: 1.1rem; font-weight: 700; color: {'var(--dye)' if scr['blocked'] else 'var(--ok)'}; margin-top: 4px;">
+                    {'🛑 ATTACK INTERCEPTED BY FIREWALL' if scr['blocked'] else '✅ SAFE / BENIGN'}
+                  </div>
+                  <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+                    Models an agent obeying instructions inside emails. The Agent Firewall forcefully blocks exfiltration at the perimeter.
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.expander("🔍 Scripted Engine Execution Trace", expanded=True):
+                render_trace_timeline(scr["trace"].events)
+                render_sandbox_state_panels(scr["state"])
+
+        with col_l:
+            if llm.get("error"):
+                st.error(f"Nemotron API error: {llm['error']}")
+            else:
+                st.markdown(
+                    f"""
+                    <div class="obsidian-card" style="border-top: 3px solid {'var(--dye)' if llm['blocked'] else 'var(--ok)'}; padding: 1rem;">
+                      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted);">ENGINE 2: NEMOTRON 3.5 LLM</div>
+                      <div style="font-size: 1.1rem; font-weight: 700; color: {'var(--dye)' if llm['blocked'] else 'var(--ok)'}; margin-top: 4px;">
+                        {'🛑 COMPROMISED (FIREWALL BLOCKED TOOL)' if llm['blocked'] else '✅ COGNITIVELY FILTERED / SAFE'}
+                      </div>
+                      <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+                        Live frontier LLM reasoning. Distinguishes whether the model rejected the prompt naturally or attempted an unauthorized tool call.
+                      </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                with st.expander("🔍 Nemotron LLM Execution Trace & Reasoning", expanded=True):
+                    render_trace_timeline(llm["trace"].events)
+                    render_sandbox_state_panels(llm["state"])
+
+    elif "mail_run_trace" in st.session_state:
         trace = st.session_state["mail_run_trace"]
         state = st.session_state["mail_run_state"]
 
