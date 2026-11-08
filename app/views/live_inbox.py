@@ -54,8 +54,8 @@ def get_body(msg: email.message.Message) -> str:
     return "(No plain text body found)"
 
 
-def fetch_recent_emails(limit: int = 6) -> list[dict[str, Any]]:
-    """Fetch the most recent emails from the connected IMAP account."""
+def fetch_recent_emails(limit: int = 10, folder: str = "ALL") -> list[dict[str, Any]]:
+    """Fetch the most recent emails across INBOX, Spam, All Mail, or all combined."""
     user = os.getenv("EMAIL_ACCOUNT")
     password = os.getenv("EMAIL_APP_PASSWORD")
     server = os.getenv("EMAIL_IMAP_SERVER", "imap.gmail.com")
@@ -65,30 +65,59 @@ def fetch_recent_emails(limit: int = 6) -> list[dict[str, Any]]:
 
     mail = imaplib.IMAP4_SSL(server)
     mail.login(user, password)
-    mail.select("INBOX", readonly=True)
 
-    status, data = mail.search(None, "ALL")
-    if status != "OK" or not data[0]:
-        mail.close()
-        mail.logout()
-        return []
+    # Determine which folders to query
+    if folder == "INBOX":
+        folders_to_check = [("INBOX", "INBOX")]
+    elif folder == "SPAM":
+        folders_to_check = [("[Gmail]/Spam", "Spam/Junk")]
+    elif folder == "ALL_MAIL":
+        folders_to_check = [('"[Gmail]/All Mail"', "All Mail")]
+    else:  # "ALL" (Inbox + Spam + All Mail)
+        folders_to_check = [
+            ("INBOX", "Inbox"),
+            ("[Gmail]/Spam", "Spam/Junk"),
+            ('"[Gmail]/All Mail"', "All Mail"),
+        ]
 
-    all_ids = data[0].split()
-    recent_ids = all_ids[-limit:]
-    recent_ids.reverse()
+    results: list[dict[str, Any]] = []
+    seen_message_ids: set[str] = set()
 
-    results = []
-    for eid in recent_ids:
-        s, msg_data = mail.fetch(eid, "(RFC822)")
-        if s == "OK":
-            msg = email.message_from_bytes(msg_data[0][1])
-            results.append({
-                "id": eid.decode() if isinstance(eid, bytes) else str(eid),
-                "subject": decode_str(msg.get("Subject")),
-                "from": decode_str(msg.get("From")),
-                "date": decode_str(msg.get("Date")),
-                "body": get_body(msg),
-            })
+    for folder_name, folder_label in folders_to_check:
+        try:
+            status, _ = mail.select(folder_name, readonly=True)
+            if status != "OK":
+                continue
+
+            status, data = mail.search(None, "ALL")
+            if status != "OK" or not data[0]:
+                continue
+
+            all_ids = data[0].split()
+            recent_ids = all_ids[-limit:]
+            recent_ids.reverse()
+
+            for eid in recent_ids:
+                s, msg_data = mail.fetch(eid, "(RFC822)")
+                if s == "OK":
+                    msg = email.message_from_bytes(msg_data[0][1])
+                    msg_id = decode_str(msg.get("Message-ID")) or f"{folder_name}_{eid.decode(errors='ignore')}"
+                    
+                    if msg_id in seen_message_ids:
+                        continue
+                    seen_message_ids.add(msg_id)
+
+                    results.append({
+                        "id": eid.decode() if isinstance(eid, bytes) else str(eid),
+                        "msg_id": msg_id,
+                        "folder": folder_label,
+                        "subject": decode_str(msg.get("Subject")) or "(No Subject)",
+                        "from": decode_str(msg.get("From")),
+                        "date": decode_str(msg.get("Date")),
+                        "body": get_body(msg),
+                    })
+        except Exception:
+            continue
 
     mail.close()
     mail.logout()
@@ -178,45 +207,57 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
         st.session_state["seen_email_ids"] = set()
 
     # Auto-Shield Controls
-    col_ctrl1, col_ctrl2 = st.columns([2.5, 3.5])
+    col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2.5, 2.5, 2.5])
     with col_ctrl1:
-        auto_shield = st.toggle("⚡ Continuous Inbox Shield (Auto-Scan)", value=False, help="Continuously poll inbox for new emails and automatically scan them.")
+        auto_shield = st.toggle("⚡ Continuous Shield (Auto-Scan)", value=False, help="Continuously poll inbox for new emails and automatically scan them.")
     with col_ctrl2:
+        folder_option = st.selectbox(
+            "Folder Scope",
+            options=["ALL", "INBOX", "SPAM", "ALL_MAIL"],
+            format_func=lambda x: {
+                "ALL": "🌐 All Folders (Inbox + Spam + All Mail)",
+                "INBOX": "📥 Inbox Only",
+                "SPAM": "🚨 Spam / Junk Only",
+                "ALL_MAIL": "🗄️ All Mail",
+            }.get(x, x),
+            index=0,
+        )
+    with col_ctrl3:
         poll_interval = st.select_slider("Polling Interval (seconds)", options=[5, 10, 15, 30, 60], value=10, disabled=not auto_shield)
 
     # Initial or manual fetch
-    col_ref, col_clear = st.columns([2, 5])
+    col_ref, _ = st.columns([2, 5])
     with col_ref:
         manual_refresh = st.button("🔄 Check & Fetch Recent Real Emails", use_container_width=True)
 
-    if manual_refresh or "real_emails" not in st.session_state:
-        with st.spinner("Connecting to Gmail IMAP securely..."):
+    if manual_refresh or "real_emails" not in st.session_state or st.session_state.get("last_folder_scope") != folder_option:
+        with st.spinner(f"Connecting to Gmail IMAP ({folder_option} scope)..."):
             try:
-                emails = fetch_recent_emails(limit=6)
+                emails = fetch_recent_emails(limit=10, folder=folder_option)
                 st.session_state["real_emails"] = emails
+                st.session_state["last_folder_scope"] = folder_option
             except Exception as e:
                 st.error(f"Failed to connect to Gmail: {e}")
                 return
 
     emails = st.session_state.get("real_emails", [])
     if not emails:
-        st.info("No emails found in INBOX.")
+        st.info(f"No emails found in {folder_option}.")
         return
 
     # Mark initial seen if empty so it doesn't backlog 10 emails at once
     if not st.session_state["seen_email_ids"]:
-        # seed with current emails except maybe the very latest
         for e in emails:
-            st.session_state["seen_email_ids"].add(str(e["id"]))
+            st.session_state["seen_email_ids"].add(str(e.get("msg_id", e["id"])))
 
     # Auto-Shield Loop logic: check if there's any new email
     if auto_shield:
         try:
-            fresh_emails = fetch_recent_emails(limit=3)
-            new_incoming = [m for m in fresh_emails if str(m["id"]) not in st.session_state["seen_email_ids"]]
+            fresh_emails = fetch_recent_emails(limit=5, folder=folder_option)
+            new_incoming = [m for m in fresh_emails if str(m.get("msg_id", m["id"])) not in st.session_state["seen_email_ids"]]
             if new_incoming:
                 for new_mail in reversed(new_incoming):
-                    st.toast(f"⚡ New email detected from {new_mail['from']}! Running firewall scan...", icon="🛡️")
+                    st.toast(f"⚡ New email detected in [{new_mail['folder']}] from {new_mail['from']}! Running firewall scan...", icon="🛡️")
                     trace, state = run_firewall_on_email(new_mail, selected_agent, firewall_mode)
                     decisions = [e for e in trace.events if e.get("type") == "decision"]
                     blocked = any(d.get("verdict") == "BLOCK" for d in decisions)
@@ -228,7 +269,7 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
                         "trace": trace,
                         "state": state,
                     })
-                    st.session_state["seen_email_ids"].add(str(new_mail["id"]))
+                    st.session_state["seen_email_ids"].add(str(new_mail.get("msg_id", new_mail["id"])))
                 st.session_state["real_emails"] = fresh_emails
         except Exception as scan_err:
             st.error(f"Error in continuous shield: {scan_err}")
@@ -261,16 +302,20 @@ def render_live_inbox(selected_agent: str, firewall_mode: str) -> None:
                 render_sandbox_state_panels(entry["state"])
 
     st.markdown("---")
-    st.markdown("#### 📥 Inspect & Test Emails in Inbox")
-    email_labels = [f"[{e['id']}] {e['subject']} — from: {e['from']}" for e in emails]
+    st.markdown("#### 📥 Inspect & Test Emails across Folders")
+    email_labels = [f"[{e.get('folder', 'Inbox')} #{e['id']}] {e['subject']} — from: {e['from']}" for e in emails]
     selected_idx = st.selectbox("Select email to test manually with firewall:", range(len(emails)), format_func=lambda i: email_labels[i])
     selected_mail = emails[selected_idx]
 
     # Display Email Details
+    folder_badge = selected_mail.get("folder", "Inbox")
     st.markdown(
         f"""
         <div class="obsidian-card" style="border-left: 3px solid var(--trust); padding: 1rem 1.25rem; margin-bottom: 1rem;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">REAL EMAIL METADATA</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">REAL EMAIL METADATA</div>
+            <span style="font-size: 11px; font-weight: 700; background: var(--line); padding: 2px 8px; border-radius: 2px; color: var(--ink);">{folder_badge}</span>
+          </div>
           <div style="font-size: 1.1rem; font-weight: 700; color: var(--ink); margin: 0.35rem 0;">{selected_mail['subject']}</div>
           <div style="font-size: 12px; color: var(--muted);"><strong>From:</strong> <code>{selected_mail['from']}</code> | <strong>Date:</strong> {selected_mail['date']}</div>
         </div>
