@@ -113,37 +113,31 @@ def render_dashboard(
 
     # Trace Hero Card with animated pipe and stamp
     st.markdown(
-        """
-        <section class="trace-container" aria-label="Execution trace sequence">
-          <div class="trace-pipe-wrapper">
-            <div class="pipe-track"></div>
-            <div class="pipe-flow"></div>
-
-            <div class="trace-step step-active-trust">
-              <div class="node-circle">1</div>
-              <div class="step-label">User prompt</div>
-              <div class="step-tool">read_webpage</div>
-              <span class="verdict-tag tag-allow">allowed</span>
-            </div>
-
-            <div class="trace-step step-active-dye">
-              <div class="node-circle">2</div>
-              <div class="step-label">Context tainted</div>
-              <div class="step-tool">injected prompt</div>
-              <span class="verdict-tag tag-taint">context tainted</span>
-            </div>
-
-            <div class="trace-step step-active-dye">
-              <div class="node-circle">3</div>
-              <div class="step-label">Exfiltration blocked</div>
-              <div class="step-tool">send_email</div>
-              <span class="verdict-tag tag-block">blocked</span>
-            </div>
-          </div>
-
-          <div class="blocked-stamp">BLOCKED</div>
-        </section>
-        """,
+        '<section class="trace-container" aria-label="Execution trace sequence">'
+        '<div class="trace-pipe-wrapper">'
+        '<div class="pipe-track"></div>'
+        '<div class="pipe-flow"></div>'
+        '<div class="trace-step step-active-trust">'
+        '<div class="node-circle">1</div>'
+        '<div class="step-label">User prompt</div>'
+        '<div class="step-tool">read_webpage</div>'
+        '<span class="verdict-tag tag-allow">allowed</span>'
+        '</div>'
+        '<div class="trace-step step-active-dye">'
+        '<div class="node-circle">2</div>'
+        '<div class="step-label">Context tainted</div>'
+        '<div class="step-tool">injected prompt</div>'
+        '<span class="verdict-tag tag-taint">context tainted</span>'
+        '</div>'
+        '<div class="trace-step step-active-dye">'
+        '<div class="node-circle">3</div>'
+        '<div class="step-label">Exfiltration blocked</div>'
+        '<div class="step-tool">send_email</div>'
+        '<span class="verdict-tag tag-block">blocked</span>'
+        '</div>'
+        '</div>'
+        '<div class="blocked-stamp">BLOCKED</div>'
+        '</section>',
         unsafe_allow_html=True,
     )
 

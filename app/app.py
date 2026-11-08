@@ -48,25 +48,8 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    # Sidebar: Theme & Mode Controls
-    st.sidebar.markdown(
-        """
-        <div style="font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 0.5rem; margin-bottom: 0.5rem;">
-          THEME SELECTION
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    theme_choice = st.sidebar.selectbox(
-        "Color Palette",
-        ["Dark (Ink & Lime)", "Light (Mint & Navy)"],
-        index=0,
-        label_visibility="collapsed",
-    )
-    theme_val = "dark" if "Dark" in theme_choice else "light"
-
-    # Apply industrial drafting-table stylesheet with active theme tokens
-    apply_theme(theme_val)
+    # Apply industrial drafting-table dark theme (Ink & Lime)
+    apply_theme("dark")
 
     st.sidebar.markdown(
         """

@@ -32,12 +32,15 @@ def get_theme_css(theme: str = "dark") -> str:
         dye_contrast = "#0A0A0F"
         btn_bg = "#1A1A24"
         btn_hover = "#242432"
+        input_bg = "#14141C"
+        input_border = "rgba(244,244,250,0.18)"
+        input_color = "#F4F4FA"
     else:
         bg = "#CDEFE0"
         panel = "#EAFBF3"
         panel_alt = "#DCF7EB"
         ink = "#0A2540"
-        muted = "#3F5F6E"
+        muted = "#2C4A5A"
         line = "rgba(10,37,64,0.18)"
         trust = "#1B5FD6"
         dye = "#E11D48"
@@ -46,8 +49,11 @@ def get_theme_css(theme: str = "dark") -> str:
         grid = "rgba(10,37,64,0.06)"
         stamp_ink = "#0A2540"
         dye_contrast = "#FFFFFF"
-        btn_bg = "#D8F4E8"
-        btn_hover = "#C4EEDE"
+        btn_bg = "#EAFBF3"
+        btn_hover = "#DCF7EB"
+        input_bg = "#EAFBF3"
+        input_border = "rgba(10,37,64,0.22)"
+        input_color = "#0A2540"
 
     return f"""
 <style>
@@ -69,6 +75,9 @@ def get_theme_css(theme: str = "dark") -> str:
   --dye-contrast: {dye_contrast};
   --btn-bg: {btn_bg};
   --btn-hover: {btn_hover};
+  --input-bg: {input_bg};
+  --input-border: {input_border};
+  --input-color: {input_color};
 }}
 
 /* Global Background and Typography */
@@ -85,15 +94,69 @@ html, body, .stApp {{
   -webkit-font-smoothing: antialiased;
 }}
 
-/* Streamlit Header removal and Container Tightening */
+/* Streamlit Header & Sidebar Toggle Visibility */
 header[data-testid="stHeader"] {{
+  background: transparent !important;
+  color: var(--ink) !important;
+}}
+
+/* Hide default Streamlit Deploy button and developer toolbar */
+.stAppDeployButton,
+[data-testid="stAppDeployButton"],
+#MainMenu,
+footer {{
   display: none !important;
+}}
+
+header[data-testid="stHeader"] * {{
+  color: var(--ink) !important;
+  fill: var(--ink) !important;
+}}
+
+/* Ensure sidebar collapse / expand chevron button is always visible & interactive */
+[data-testid="stSidebarCollapsedControl"],
+button[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--ink) !important;
+  background-color: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  z-index: 999999 !important;
+}}
+
+[data-testid="stSidebarCollapsedControl"] * {{
+  color: var(--ink) !important;
+  fill: var(--ink) !important;
 }}
 
 .block-container {{
   max-width: 1200px !important;
   padding: 2rem 1.5rem 3rem 1.5rem !important;
   margin: 0 auto !important;
+  animation: slideTransition 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform, opacity;
+}}
+
+/* PowerPoint-style smooth slide transition: gentle incoming glide + soft cross-fade */
+@keyframes slideTransition {{
+  0% {{
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }}
+  40% {{
+    opacity: 0.6;
+  }}
+  100% {{
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }}
+}}
+
+section[data-testid="stMain"] {{
+  overflow-x: hidden !important;
 }}
 
 /* Typography */
@@ -273,23 +336,108 @@ section[data-testid="stSidebar"] * {{
   color: var(--ink) !important;
 }}
 
-/* Native Form Controls & Inputs */
-div[data-baseweb="select"] > div {{
-  background-color: var(--bg) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
+/* ==========================================================================
+   Comprehensive Form Controls & Dropdown Selectboxes (Zero Black Boxes in Light Theme)
+   ========================================================================== */
+.stSelectbox,
+[data-testid="stSelectbox"],
+div[data-baseweb="select"],
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] div[role="combobox"],
+div[data-baseweb="select"] [data-testid="stSelectboxVirtualDropdown"] {{
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-color) !important;
   border-radius: 3px !important;
 }}
 
+/* Force all inner text, value labels, placeholders and SVG icons in selectbox to inherit theme color */
+[data-testid="stSelectbox"] div,
+[data-testid="stSelectbox"] span,
+[data-testid="stSelectbox"] p,
+div[data-baseweb="select"] div,
+div[data-baseweb="select"] span,
+div[data-baseweb="select"] p,
+div[data-baseweb="select"] svg {{
+  color: var(--input-color) !important;
+  fill: var(--input-color) !important;
+  background-color: transparent !important;
+}}
+
+/* Dropdown popover menu & options list when clicked */
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] > div,
+div[data-baseweb="popover"] ul,
+ul[role="listbox"],
+ul[role="listbox"] li,
+li[role="option"] {{
+  background-color: var(--panel) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}}
+
+ul[role="listbox"] li:hover,
+ul[role="listbox"] li[aria-selected="true"],
+li[role="option"]:hover,
+li[role="option"][aria-selected="true"] {{
+  background-color: var(--panel-alt) !important;
+  color: var(--ink) !important;
+}}
+
+ul[role="listbox"] li span,
+li[role="option"] span {{
+  color: var(--ink) !important;
+}}
+
+/* Text Inputs, Textareas & Search Boxes */
+.stTextInput,
+[data-testid="stTextInput"],
+div[data-baseweb="input"],
 div[data-baseweb="input"] > div {{
-  background-color: var(--bg) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-color) !important;
   border-radius: 3px !important;
 }}
 
+div[data-baseweb="input"] input,
 input, textarea {{
+  background-color: transparent !important;
+  color: var(--input-color) !important;
+}}
+
+/* Sidebar Navigation Smooth Interactive Transitions */
+[data-testid="stRadio"] div[role="radiogroup"] {{
+  gap: 3px !important;
+}}
+
+[data-testid="stRadio"] label {{
+  padding: 0.4rem 0.65rem !important;
+  border-radius: 4px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  margin-bottom: 2px !important;
+  cursor: pointer !important;
+}}
+
+[data-testid="stRadio"] label:hover {{
+  background-color: var(--panel-alt) !important;
+  transform: translateX(3px) !important;
+}}
+
+[data-testid="stRadio"] label[data-checked="true"],
+[data-testid="stRadio"] label:has(input:checked) {{
+  background-color: var(--panel-alt) !important;
+  border-left: 3px solid var(--trust) !important;
+  padding-left: calc(0.65rem - 3px) !important;
+}}
+
+[data-testid="stRadio"] label,
+[data-testid="stRadio"] div,
+[data-testid="stRadio"] span,
+[data-testid="stRadio"] p {{
   color: var(--ink) !important;
+  font-family: 'Martian Mono', monospace !important;
+  font-size: 12px !important;
 }}
 
 /* Buttons */
@@ -375,17 +523,17 @@ input, textarea {{
 .trace-pipe-wrapper {{
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin: 3rem 1.5rem 2.5rem 1.5rem;
+  margin: 2.5rem 1.5rem 2rem 1.5rem;
 }}
 
 .pipe-track {{
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 6px;
+  top: 19px;
+  left: 20px;
+  right: 20px;
+  height: 4px;
   transform: translateY(-50%);
   z-index: 1;
   background: var(--line);
@@ -393,10 +541,10 @@ input, textarea {{
 
 .pipe-flow {{
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 6px;
+  top: 19px;
+  left: 20px;
+  right: 20px;
+  height: 4px;
   transform: translateY(-50%);
   z-index: 2;
   background: linear-gradient(to right, var(--trust) 0%, var(--trust) 50%, var(--dye) 50%, var(--dye) 100%);
@@ -506,6 +654,9 @@ input, textarea {{
 }}
 
 @media (prefers-reduced-motion: reduce) {{
+  .block-container {{
+    animation: none !important;
+  }}
   .pipe-flow {{
     animation: none !important;
     clip-path: inset(0 0 0 0) !important;
@@ -514,6 +665,10 @@ input, textarea {{
     animation: none !important;
     opacity: 1 !important;
     transform: scale(1) rotate(-7deg) !important;
+  }}
+  [data-testid="stRadio"] label {{
+    transition: none !important;
+    transform: none !important;
   }}
 }}
 
