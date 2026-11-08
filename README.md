@@ -8,7 +8,17 @@ tainted context, and applies a configurable policy to every tool call:
 
 Includes a pluggable provenance engine (**v1 baseline vs v2 hardened**), a comprehensive
 **red-team fuzzer (F1–F7)**, a **bounded formal policy verifier**, an interactive **"Break It"
-adversarial lab**, and full benchmark suites.
+adversarial lab**, a **Live Email Inbox Auto-Shield** connecting directly to real Gmail accounts,
+and full benchmark suites with side-by-side **Scripted vs NVIDIA Nemotron LLM** evaluation.
+
+---
+
+## 👥 Developed By
+
+* **Mohan Mallempudi** — [@mohanmallempudi](https://github.com/mohanmallempudi)
+* **AVKD1279** — [@AVKD1279](https://github.com/AVKD1279)
+
+---
 
 ## Problem
 
@@ -115,6 +125,22 @@ python benchmarks/verify_policy.py --k 2
 
 # Launch the interactive Streamlit UI & "Break It" Attack Lab
 streamlit run app/app.py
+```
+
+### Environment Configuration (.env or Streamlit Secrets)
+
+To enable live LLM evaluation and continuous real-world email protection:
+
+```bash
+# OpenRouter / NVIDIA Nemotron LLM
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_API_KEY=your-openrouter-key
+LLM_MODEL=nvidia/nemotron-3.5-super-vl:free
+
+# Gmail IMAP Auto-Defense (Optional: connects real inbox to Live Email Inbox view)
+EMAIL_ACCOUNT=your-email@gmail.com
+EMAIL_APP_PASSWORD=your-16-char-app-password
+EMAIL_IMAP_SERVER=imap.gmail.com
 ```
 
 ## Benchmark Evaluation Results
@@ -231,10 +257,11 @@ agent-firewall/
     styles.py                Cybersecurity DX-grade design system
     components.py            Reusable UI cards, timeline badges, metric containers
     views/
-      dashboard.py           Executive Dashboard & Scenario Runner
+      dashboard.py           Executive Dashboard & Scenario Runner (Side-by-Side comparison)
       agent_monitoring.py    Agent execution telemetry & memory inspector
       threat_detection.py    Taint flow architecture & payload taxonomy
       break_it.py            Interactive Red-Team Attack Lab & Bypass Tester
+      live_inbox.py          Real Gmail Inbox Auto-Shield (Continuous multi-folder scanner)
       event_logs.py          Audit log stream & forensic viewer
       settings.py            Policy editor & enforcement parameters
 
