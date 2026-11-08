@@ -101,8 +101,8 @@ class ScriptedAgent:
 
         # Email
         email_pattern = re.compile(
-            r"(?:email|e-mail|send|forward|envia|envia|envoyez|envoie)\b[^.\n]{0,180}?\b(?:to|a|a)\s+['\"]?([\w.+-]+@[\w-]+(?:\.[\w-]+)+)['\"]?",
-            re.IGNORECASE,
+            r"(?:email|e-mail|send|forward|envia|envoyez|envoie)\b.{0,250}?\b(?:to|a)\s+['\"]?([\w.+-]+@[\w-]+(?:\.[\w-]+)+)['\"]?",
+            re.IGNORECASE | re.DOTALL,
         )
         for em in email_pattern.finditer(blob):
             to_addr = em.group(1)
