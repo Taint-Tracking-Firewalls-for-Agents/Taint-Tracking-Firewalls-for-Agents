@@ -33,6 +33,7 @@ from app.styles import apply_theme
 from app.views.agent_monitoring import render_agent_monitoring
 from app.views.break_it import render_break_it
 from app.views.dashboard import render_dashboard
+from app.views.live_inbox import render_live_inbox
 from app.views.event_logs import render_event_logs
 from app.views.settings import render_settings
 from app.views.threat_detection import render_threat_detection
@@ -73,6 +74,7 @@ def main() -> None:
         "Agent Monitoring",
         "Threat Detection",
         "Break It (Red Team)",
+        "Live Email Inbox",
         "Event Logs",
         "Policy & Settings",
     ]
@@ -159,6 +161,8 @@ def main() -> None:
         render_threat_detection(all_scenarios)
     elif selected_page == "Break It (Red Team)":
         render_break_it(all_scenarios, firewall_mode)
+    elif selected_page == "Live Email Inbox":
+        render_live_inbox(selected_agent, firewall_mode)
     elif selected_page == "Event Logs":
         render_event_logs()
     elif selected_page == "Policy & Settings":
