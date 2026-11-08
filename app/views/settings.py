@@ -12,7 +12,7 @@ from app.components import render_metric_card
 def render_settings(current_mode: str) -> None:
     """Render firewall settings, policy rules, and configuration controls."""
     st.markdown("### ⚙️ Firewall Policy Engine & Defense Configuration")
-    st.caption("Active enforcement policies, two-stage evaluation mechanics, and false-positive recovery controls.")
+    st.caption("Active enforcement policies and two-stage evaluation mechanics. Stage 2 is recommended: it blocks all 23 tested attacks and allows all 12 tested benign tasks.")
 
     repo_root = Path(__file__).resolve().parents[2]
     policy_path = repo_root / "policies" / "default.yaml"
@@ -92,7 +92,7 @@ def render_settings(current_mode: str) -> None:
                 <div class="mono-metric" style="font-size: 11px; color: #34D399; line-height: 1.6; background: #030609; padding: 0.5rem; border-radius: 4px;">
                     • ATTACKS STOPPED: 23/23 (0.0% ASR)<br>
                     • BENIGN UTILITY: 12/12 (100.0%)<br>
-                    • FALSE BLOCKS: 0 (Zero benign friction)
+                    • FALSE BLOCKS: 0 (all 12 benign tasks passed through)
                 </div>
             </div>
             """,

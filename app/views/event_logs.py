@@ -35,8 +35,8 @@ def get_all_benchmark_events(repo_root: Path) -> list[dict[str, Any]]:
 
 def render_event_logs() -> None:
     """Render the searchable audit event log viewer."""
-    st.markdown("### 📜 Real-Time Security Event & Audit Stream")
-    st.caption("Search, filter, and inspect granular firewall interception events, decisions, and argument provenance records.")
+    st.markdown("### 📜 Firewall Audit Log")
+    st.caption("Search and filter the firewall's decision log. Each row shows what tool the agent tried to call, the argument values, and whether the firewall allowed or blocked it.")
 
     repo_root = Path(__file__).resolve().parents[2]
 
@@ -96,12 +96,30 @@ def render_event_logs() -> None:
     if filtered:
         rows = []
         for e in filtered[:100]:
+            etype = e.get("type", "unknown")
+            tool = e.get("name", e.get("rule_id", ""))
+            verdict = (e.get("verdict") or e.get("label") or "").upper()
+            # Build a plain-language summary
+            if etype == "decision" and verdict == "BLOCK":
+                summary = f"Blocked {tool} — {e.get('reason', '')}"[:80]
+            elif etype == "decision" and verdict == "ALLOW":
+                summary = f"Allowed {tool} — {e.get('reason', '')}"[:80]
+            elif etype == "decision" and verdict == "ASK":
+                summary = f"Asked user about {tool} — {e.get('reason', '')}"[:80]
+            elif etype == "tool_call":
+                args = e.get("args", {})
+                arg_preview = ", ".join(f"{k}={repr(v)[:30]}" for k, v in list(args.items())[:2])
+                summary = f"Called {tool}({arg_preview})"[:80]
+            elif etype == "tool_result":
+                summary = f"Result from {e.get('source','tool')}: {e.get('text','')[:50]}"
+            else:
+                summary = e.get("reason", e.get("text", ""))[:80]
+
             rows.append({
-                "SCENARIO": e.get("scenario_id", "-"),
-                "TYPE": e.get("type", "-").upper(),
-                "TOOL / RULE": e.get("name", e.get("rule_id", "-")),
-                "VERDICT / LABEL": e.get("verdict", e.get("label", "-")).upper() if e.get("verdict") or e.get("label") else "-",
-                "PAYLOAD": e.get("reason", e.get("text", str(e.get("args", "-"))))[:65] + "...",
+                "Scenario": e.get("scenario_id", "-"),
+                "What happened": summary,
+                "Verdict": verdict or "-",
+                "Type": etype,
             })
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
@@ -115,11 +133,21 @@ def render_event_logs() -> None:
         )
         for i, ev in enumerate(filtered[:20]):
             etype = ev.get("type", "unknown")
-            header_str = f"[{ev.get('scenario_id', 'Session')}] {etype.upper()}"
+            _type_labels = {
+                "tool_call": "Tool Call",
+                "decision": "Firewall Decision",
+                "tool_result": "Tool Result",
+                "segment": "Context Segment",
+                "approval": "User Approval",
+                "final": "Final Response",
+            }
+            type_label = _type_labels.get(etype, etype.upper())
+            header_str = f"[{ev.get('scenario_id', 'Session')}] {type_label}"
             if "name" in ev:
-                header_str += f" - {ev['name']}"
+                header_str += f" — {ev['name']}"
             if "verdict" in ev:
-                header_str += f" -> {ev['verdict']}"
+                verdict_icon = {"BLOCK": "✕", "ALLOW": "✓", "ASK": "⚠"}.get(ev["verdict"], "")
+                header_str += f" — {verdict_icon} {ev['verdict']}"
 
             with st.expander(header_str):
                 st.json(ev)

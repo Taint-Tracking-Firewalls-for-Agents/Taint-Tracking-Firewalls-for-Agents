@@ -43,7 +43,7 @@ def main() -> None:
     """Streamlit application main entrypoint."""
     st.set_page_config(
         page_title="Agent Firewall // Lab Instrument Cockpit",
-        page_icon="🛡️",
+        page_icon="ðŸ›¡ï¸",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -61,7 +61,7 @@ def main() -> None:
     )
 
     nav_pages = [
-        "Executive Dashboard",
+        "Overview",
         "Agent Monitoring",
         "Threat Detection",
         "Break It (Red Team)",
@@ -128,7 +128,7 @@ def main() -> None:
     all_scenarios = attacks + benign
 
     # View Routing
-    if selected_page == "Executive Dashboard":
+    if selected_page == "Overview":
         render_dashboard(all_scenarios, selected_agent, firewall_mode)
     elif selected_page == "Agent Monitoring":
         render_agent_monitoring(selected_agent, firewall_mode)

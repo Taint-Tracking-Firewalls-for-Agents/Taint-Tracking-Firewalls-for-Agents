@@ -1,0 +1,64 @@
+{
+  "v2": {
+    "stage2": {
+      "families": {
+        "F1_substring": {
+          "cases": 18,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F6_tool_names": {
+          "cases": 15,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F3_normalization": {
+          "cases": 18,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F2_extension": {
+          "cases": 16,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F4_path_tricks": {
+          "cases": 16,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F5_structure": {
+          "cases": 16,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "Control": {
+          "cases": 5,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        },
+        "F7_laundering": {
+          "cases": 5,
+          "bypasses": 0,
+          "false_blocks": 0,
+          "bypass_examples": []
+        }
+      },
+      "total_cases": 109,
+      "total_bypasses": 0,
+      "total_false_blocks": 0
+    }
+  },
+  "meta": {
+    "seed": 9999,
+    "purpose": "independent_validation_fresh_seed",
+    "note": "Seed was never used during v2 hardening. Confirms generalisation."
+  }
+}

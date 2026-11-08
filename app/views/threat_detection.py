@@ -34,16 +34,16 @@ def render_threat_detection(scenarios: list[Scenario]) -> None:
         )
     with c3:
         render_metric_card(
-            title="Adaptive Laundering (A21)",
-            value="OUT_OF_SCOPE",
-            caption="Pre-session File State",
+            title="Adaptive A21 (Known Limit)",
+            value="1 CASE",
+            caption="File already on disk before session",
             accent_color="#F59E0B",
         )
     with c4:
         render_metric_card(
-            title="Benign False Alarms",
-            value="0.0%",
-            caption="Zero False Positives (Stage 2)",
+            title="Benign False Blocks",
+            value="0 / 12",
+            caption="0 false blocks in 12 benign tasks (Stage 2)",
             accent_color="#0297DE",
         )
 
@@ -112,7 +112,7 @@ def render_threat_detection(scenarios: list[Scenario]) -> None:
                 <div>
                     <span class="metric-micro-label">ADAPTIVE EVASION:</span>
                     <span class="mono-metric" style="font-size: 11px; color: {'#F59E0B' if selected_attack.adaptive else '#64748B'};">
-                        {'YES (File Store Laundering)' if selected_attack.adaptive else 'NO (Direct Webpage/Email Injection)'}
+                        {'KNOWN LIMIT: file was already on disk before the agent session started — the firewall cannot see pre-existing file content' if selected_attack.adaptive else 'NO (Direct Webpage/Email Injection)'}
                     </span>
                 </div>
             </div>

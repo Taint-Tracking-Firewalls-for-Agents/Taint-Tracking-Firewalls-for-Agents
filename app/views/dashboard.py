@@ -52,7 +52,7 @@ def render_dashboard(
           <div>
             <h1>AGENT<br><span style="color: var(--dye);">FIREWALL</span></h1>
             <p class="subtitle" style="font-size: 13px; color: var(--muted); margin-top: 0.85rem;">
-              Data-provenance firewall stopping prompt injection in AI agent workflows.
+              Stops your AI agent from obeying instructions hidden in webpages, emails and files.
             </p>
           </div>
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
@@ -121,7 +121,7 @@ def render_dashboard(
         '<div class="node-circle">1</div>'
         '<div class="step-label">User prompt</div>'
         '<div class="step-tool">read_webpage</div>'
-        '<span class="verdict-tag tag-allow">allowed</span>'
+        '<span class="verdict-tag tag-allow">&#10003; allowed</span>'
         '</div>'
         '<div class="trace-step step-active-dye">'
         '<div class="node-circle">2</div>'
@@ -133,7 +133,7 @@ def render_dashboard(
         '<div class="node-circle">3</div>'
         '<div class="step-label">Exfiltration blocked</div>'
         '<div class="step-tool">send_email</div>'
-        '<span class="verdict-tag tag-block">blocked</span>'
+        '<span class="verdict-tag tag-block">&#10005; blocked</span>'
         '</div>'
         '</div>'
         '<div class="blocked-stamp">BLOCKED</div>'
@@ -214,7 +214,7 @@ def render_dashboard(
                   <span>read-only</span>
                 </td>
                 <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
-                <td>—</td>
+                <td>Ã¢â‚¬â€</td>
               </tr>
               <tr>
                 <td><code>read_webpage</code></td>
@@ -244,7 +244,7 @@ def render_dashboard(
                   <span>read-only</span>
                 </td>
                 <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
-                <td>—</td>
+                <td>Ã¢â‚¬â€</td>
               </tr>
               <tr>
                 <td><code>write_file</code></td>
@@ -328,12 +328,78 @@ def render_dashboard(
         unsafe_allow_html=True,
     )
 
-    # 5. One-line guarantee text under table
+    # 5. Scoped result note under table (replaces overclaim)
     st.markdown(
         """
-        <div style="font-size: 12px; color: var(--muted); border-left: 2px solid var(--dye); padding-left: 12px; margin-top: 1rem; margin-bottom: 2rem;">
-          Guaranteed: no sensitive tool can be invoked with parameters originating from untrusted channels.
+        <div style="font-size: 12px; color: var(--muted); border-left: 2px solid var(--trust); padding-left: 12px; margin-top: 1rem; margin-bottom: 1rem;">
+          In 23/23 attack scenarios tested, no sensitive tool was invoked with parameters from untrusted channels.
+          Stage 2 also allowed all 12 benign tasks (0 false blocks).
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    # 6. Quick-start card
+    st.markdown(
+        """
+        <div class="font-display" style="font-size: 1.35rem; font-weight: 800; color: var(--ink); margin-top: 1.5rem; margin-bottom: 0.85rem;">
+          QUICK START
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.code(
+        """# 1 â€” Install
+pip install -r requirements.txt
+
+# 2 â€” Wrap your agent
+from firewall.guard import Guard
+from firewall.policy import Policy
+guard = Guard(policy=Policy.from_yaml("policies/default.yaml"), stage=2)
+
+# 3 â€” Run a task (attacks are blocked, benign tasks pass through)
+result = run_task(user_prompt, agent, guard, sandbox)""",
+        language="python",
+    )
+
+    # 7. Stage 1 vs Stage 2 comparison (best evidence on the page)
+    st.markdown(
+        """
+        <div class="font-display" style="font-size: 1.35rem; font-weight: 800; color: var(--ink); margin-top: 1.5rem; margin-bottom: 0.85rem;">
+          ENFORCEMENT MODE COMPARISON
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 1rem;">
+          Answers the question: will the firewall block legitimate work?
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+    stage_col1, stage_col2 = st.columns(2)
+    with stage_col1:
+        st.markdown(
+            """
+            <div class="obsidian-card" style="border-top: 2px solid var(--ask);">
+                <div class="metric-micro-label" style="color: var(--ask); margin-bottom: 0.4rem;">STAGE 1 &mdash; Conservative</div>
+                <div style="font-size: 0.9rem; color: var(--ink); line-height: 1.6;">
+                    &bull; Attacks blocked: <strong>23 / 23</strong><br>
+                    &bull; Benign tasks passed: <strong>8 / 12</strong><br>
+                    &bull; False blocks: <strong>4</strong> (tasks that read a webpage before sending email)
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with stage_col2:
+        st.markdown(
+            """
+            <div class="obsidian-card" style="border-top: 2px solid var(--ok);">
+                <div class="metric-micro-label" style="color: var(--ok); margin-bottom: 0.4rem;">STAGE 2 &mdash; Recommended</div>
+                <div style="font-size: 0.9rem; color: var(--ink); line-height: 1.6;">
+                    &bull; Attacks blocked: <strong>23 / 23</strong><br>
+                    &bull; Benign tasks passed: <strong>12 / 12</strong><br>
+                    &bull; False blocks: <strong>0</strong>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )

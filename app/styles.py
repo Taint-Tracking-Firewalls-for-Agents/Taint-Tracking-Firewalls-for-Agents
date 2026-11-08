@@ -25,7 +25,7 @@ def get_theme_css(theme: str = "dark") -> str:
         line = "rgba(244,244,250,0.14)"
         trust = "#59A6FF"
         dye = "#C6F432"
-        ok = "#C6F432"
+        ok = "#59A6FF"
         ask = "#FFB84D"
         grid = "rgba(244,244,250,0.04)"
         stamp_ink = "#0A0A0F"
@@ -309,7 +309,7 @@ p, span, label, div {{
 }}
 
 .pill-allow {{
-  background: rgba(11, 122, 75, 0.14);
+  background: rgba(89, 166, 255, 0.14);
   color: var(--ok);
   border: 1px solid var(--ok);
 }}

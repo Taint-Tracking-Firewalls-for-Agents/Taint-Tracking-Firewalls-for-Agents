@@ -13,7 +13,7 @@ from app.components import render_metric_card
 def render_agent_monitoring(selected_agent: str, firewall_mode: str) -> None:
     """Render agent runtime monitoring, health status, and tool telemetry."""
     st.markdown("### 🤖 Agent Runtime & Tool Telemetry")
-    st.caption("Inspect active execution harness instances, tool permission tiers, and sandbox interception boundaries.")
+    st.caption("See which tools are protected, how the firewall handles each one when untrusted content is in context, and whether a live model is configured.")
 
     repo_root = Path(__file__).resolve().parents[2]
     policy_path = repo_root / "policies" / "default.yaml"
@@ -34,8 +34,8 @@ def render_agent_monitoring(selected_agent: str, firewall_mode: str) -> None:
     with c2:
         render_metric_card(
             title="External LLM Link",
-            value="ACTIVE" if llm_configured else "LOCAL_MOCK",
-            caption=os.getenv("LLM_MODEL", "Regex Harness") if llm_configured else "Zero API Leaks",
+            value="ACTIVE" if llm_configured else "SCRIPTED",
+            caption=os.getenv("LLM_MODEL", "Regex Harness") if llm_configured else "No external API calls",
             accent_color="#10B981" if llm_configured else "#64748B",
         )
     with c3:
@@ -107,20 +107,26 @@ def render_agent_monitoring(selected_agent: str, firewall_mode: str) -> None:
 
     tools = policy_data.get("tools", {})
     tool_rows = []
+    _tainted_friendly = {
+        "allow": "allow (read-only, safe)",
+        "block": "block (always blocked when context tainted)",
+        "ask": "ask user (requires approval)",
+        "allow_if_args_trusted": "allow if user supplied the argument",
+    }
     for name, rule in tools.items():
         tier = rule.get("tier", "unknown")
         tainted_action = rule.get("tainted", "ask")
         out_lbl = rule.get("output_label", "trusted")
-        sens_args = ", ".join(rule.get("sensitive_args", [])) or "None"
+        sens_args = ", ".join(rule.get("sensitive_args", [])) or "—"
         prov_override = rule.get("provenance_override", True)
 
         tool_rows.append({
-            "TOOL": name,
-            "TIER": tier.upper(),
-            "WHEN TAINTED": tainted_action.upper(),
-            "OUTPUT LABEL": out_lbl.upper(),
-            "SENSITIVE ARGS": sens_args,
-            "OVERRIDE": "ALLOWED" if prov_override else "DISABLED",
+            "Tool": name,
+            "Risk tier": tier,
+            "When untrusted content in context": _tainted_friendly.get(tainted_action, tainted_action),
+            "Output label": out_lbl,
+            "Checked argument(s)": sens_args,
+            "User can override": "yes" if prov_override else "no (always blocked)",
         })
 
     st.dataframe(pd.DataFrame(tool_rows), use_container_width=True, hide_index=True)
