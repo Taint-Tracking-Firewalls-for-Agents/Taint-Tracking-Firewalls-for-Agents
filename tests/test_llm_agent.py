@@ -124,3 +124,26 @@ def test_retry_on_rate_limit(tmp_path: Path) -> None:
     assert step.text == "Success after retry"
     assert mock_client.chat.completions.create.call_count == 2
     assert slept == [1.0]  # Slept 1 second for first backoff
+
+
+def test_reasoning_details_captured_and_cached(tmp_path: Path) -> None:
+    mock_client = MagicMock()
+    mock_choice = MagicMock()
+    mock_choice.message.content = "There are 3 r's in strawberry."
+    mock_choice.message.tool_calls = []
+    sample_reasoning = [{"type": "reasoning.text", "text": "Counting: s-t-r-a-w-b-e-r-r-y"}]
+    mock_choice.message.reasoning_details = sample_reasoning
+    mock_client.chat.completions.create.return_value.choices = [mock_choice]
+    mock_client.chat.completions.create.return_value.usage = None
+
+    agent = LLMAgent(client=mock_client, model="nvidia/nemotron-3.5-super-vl:free", cache_dir=tmp_path / "cache", results_dir=tmp_path / "res")
+    messages = [{"role": "user", "content": "How many r's in strawberry?"}]
+
+    step = agent.step(messages, [])
+    assert step.text == "There are 3 r's in strawberry."
+    assert step.reasoning_details == sample_reasoning
+
+    # Verify cached step preserves reasoning_details
+    step_cached = agent.step(messages, [])
+    assert step_cached.reasoning_details == sample_reasoning
+    assert mock_client.chat.completions.create.call_count == 1

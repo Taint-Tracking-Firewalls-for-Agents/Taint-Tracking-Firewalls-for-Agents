@@ -18,6 +18,9 @@ if str(_repo_root / "src") not in sys.path:
 if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
     del sys.modules["app"]
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import streamlit as st
 
 from agent.scenarios import Scenario, load_scenarios

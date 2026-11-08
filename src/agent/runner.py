@@ -60,7 +60,10 @@ def run_task(
 
         if not step.tool_calls:
             trace.add({"type": "final", "text": step.text})
-            messages.append({"role": "assistant", "content": step.text or ""})
+            final_msg: dict[str, Any] = {"role": "assistant", "content": step.text or ""}
+            if getattr(step, "reasoning_details", None) is not None:
+                final_msg["reasoning_details"] = step.reasoning_details
+            messages.append(final_msg)
             return trace
 
         formatted_calls = [
@@ -74,11 +77,14 @@ def run_task(
             }
             for tc in step.tool_calls
         ]
-        messages.append({
+        asst_msg: dict[str, Any] = {
             "role": "assistant",
             "content": step.text or "",
             "tool_calls": formatted_calls,
-        })
+        }
+        if getattr(step, "reasoning_details", None) is not None:
+            asst_msg["reasoning_details"] = step.reasoning_details
+        messages.append(asst_msg)
 
         for tc in step.tool_calls:
             trace.add({

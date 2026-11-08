@@ -12,6 +12,7 @@ class AgentStep:
     """A single step produced by an agent."""
     text: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
+    reasoning_details: Any = None
 
 
 class Agent(Protocol):
