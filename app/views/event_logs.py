@@ -7,10 +7,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-try:
-    from app.components import render_metric_card
-except (ImportError, ModuleNotFoundError):
-    from components import render_metric_card
+from app.components import render_metric_card
 
 
 def get_all_benchmark_events(repo_root: Path) -> list[dict[str, Any]]:
