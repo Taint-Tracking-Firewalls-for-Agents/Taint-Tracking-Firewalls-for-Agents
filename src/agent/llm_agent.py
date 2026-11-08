@@ -59,10 +59,22 @@ def _make_step(text: str = "", tool_calls: list[ToolCall] | None = None, reasoni
     """Safely instantiate AgentStep even if an older version of base.py is cached in memory."""
     try:
         return AgentStep(text=text, tool_calls=tool_calls or [], reasoning_details=reasoning_details)
-    except TypeError:
+    except Exception:
+        pass
+
+    try:
         step = AgentStep(text=text, tool_calls=tool_calls or [])
         try:
-            step.reasoning_details = reasoning_details
+            setattr(step, "reasoning_details", reasoning_details)
+        except Exception:
+            pass
+        return step
+    except Exception:
+        step = AgentStep()
+        step.text = text
+        step.tool_calls = tool_calls or []
+        try:
+            setattr(step, "reasoning_details", reasoning_details)
         except Exception:
             pass
         return step

@@ -18,6 +18,11 @@ if str(_repo_root / "src") not in sys.path:
 if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
     del sys.modules["app"]
 
+# Clean up stale agent modules on reload
+for mod in list(sys.modules.keys()):
+    if mod.startswith(('agent.', 'firewall.')):
+        del sys.modules[mod]
+
 from dotenv import load_dotenv
 load_dotenv()
 
