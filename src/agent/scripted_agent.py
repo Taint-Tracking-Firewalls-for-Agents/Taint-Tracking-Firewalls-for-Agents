@@ -101,7 +101,7 @@ class ScriptedAgent:
 
         # Email
         email_pattern = re.compile(
-            r"(?:email|e-mail|send|forward|envia|envia|envoyez|envoie)\b[^.\n]{0,120}?\b(?:to|a|a)\s+([\w.+-]+@[\w-]+(?:\.[\w-]+)+)",
+            r"(?:email|e-mail|send|forward|envia|envia|envoyez|envoie)\b[^.\n]{0,180}?\b(?:to|a|a)\s+['\"]?([\w.+-]+@[\w-]+(?:\.[\w-]+)+)['\"]?",
             re.IGNORECASE,
         )
         for em in email_pattern.finditer(blob):
