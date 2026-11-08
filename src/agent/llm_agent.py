@@ -55,6 +55,19 @@ def call_openrouter_reasoning(
     return data["choices"][0]["message"]
 
 
+def _make_step(text: str = "", tool_calls: list[ToolCall] | None = None, reasoning_details: Any = None) -> AgentStep:
+    """Safely instantiate AgentStep even if an older version of base.py is cached in memory."""
+    try:
+        return AgentStep(text=text, tool_calls=tool_calls or [], reasoning_details=reasoning_details)
+    except TypeError:
+        step = AgentStep(text=text, tool_calls=tool_calls or [])
+        try:
+            step.reasoning_details = reasoning_details
+        except Exception:
+            pass
+        return step
+
+
 class BudgetExceeded(Exception):
     """Raised when the LLM API request limit is exceeded."""
 
@@ -134,7 +147,7 @@ class LLMAgent:
                     ToolCall(call_id=c["call_id"], name=c["name"], args=c["args"])
                     for c in data.get("tool_calls", [])
                 ]
-                return AgentStep(
+                return _make_step(
                     text=data.get("text", ""),
                     tool_calls=calls,
                     reasoning_details=data.get("reasoning_details"),
@@ -239,7 +252,7 @@ class LLMAgent:
 
             parsed_calls.append(ToolCall(call_id=cid, name=name, args=args_parsed))
 
-        step_result = AgentStep(
+        step_result = _make_step(
             text=final_text,
             tool_calls=parsed_calls,
             reasoning_details=reasoning_details,

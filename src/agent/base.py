@@ -14,6 +14,17 @@ class AgentStep:
     tool_calls: list[ToolCall] = field(default_factory=list)
     reasoning_details: Any = None
 
+    def __init__(
+        self,
+        text: str = "",
+        tool_calls: list[ToolCall] | None = None,
+        reasoning_details: Any = None,
+        **kwargs: Any,
+    ) -> None:
+        self.text = text
+        self.tool_calls = tool_calls if tool_calls is not None else []
+        self.reasoning_details = reasoning_details
+
 
 class Agent(Protocol):
     """Protocol that all agent implementations adhere to."""
