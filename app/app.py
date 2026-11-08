@@ -96,19 +96,21 @@ def main() -> None:
         ),
     )
 
-    # Agent Engine Selection
-    llm_enabled = bool(
-        os.getenv("LLM_BASE_URL") and os.getenv("LLM_API_KEY") and os.getenv("LLM_MODEL")
-    )
-    agent_options = ["scripted"]
-    if llm_enabled:
-        agent_options.append("llm")
+    # Ensure environment variables from repo root .env are loaded
+    load_dotenv(_repo_root / ".env", override=True)
+    if not os.getenv("LLM_BASE_URL"):
+        os.environ["LLM_BASE_URL"] = "https://openrouter.ai/api/v1"
+    if not os.getenv("LLM_MODEL"):
+        os.environ["LLM_MODEL"] = "nvidia/nemotron-3.5-super-vl:free"
+
+    # Agent Engine Selection - Always offer both deterministic scripted harness and live Nemotron LLM
+    agent_options = ["scripted", "llm"]
 
     selected_agent = st.sidebar.selectbox(
         "Agent Engine",
         agent_options,
         index=0,
-        help="Deterministic regex harness or live LLM chat completions API",
+        help="Deterministic scripted harness or live Nemotron LLM chat completions API",
     )
 
     # Status Pill in Sidebar

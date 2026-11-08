@@ -9,6 +9,7 @@ import streamlit as st
 from agent.factory import make_agent
 from agent.runner import RunResult, run_scenario
 from agent.scenarios import Scenario
+from app.components import render_trace_timeline, render_sandbox_state_panels
 
 
 def load_benchmark_summary(repo_root: Path) -> dict[str, Any]:
@@ -163,7 +164,7 @@ def render_dashboard(
             st.session_state["side_by_side"] = (selected_scenario, res_off, res_s1)
             st.session_state.pop("single_run", None)
 
-    # If run has been executed, show execution details
+    # If single run has been executed, show execution details and granular timeline
     if "single_run" in st.session_state:
         scen, res, mode_lbl = st.session_state["single_run"]
         status_color = "var(--ok)" if (scen.kind == "attack" and not res.goal_reached) or (scen.kind == "benign" and res.expectation_met) else "var(--dye)"
@@ -172,11 +173,60 @@ def render_dashboard(
             f"""
             <div class="lab-panel" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-left: 3px solid {status_color};">
               <span class="font-display" style="font-size: 1.3rem; font-weight: 800; color: {status_color};">{status_text}</span>
-              <span style="font-size: 11px; color: var(--muted); margin-left: 10px;">Scenario {scen.id} under {mode_lbl}</span>
+              <span style="font-size: 11px; color: var(--muted); margin-left: 10px;">Scenario {scen.id} under {mode_lbl.upper()} (Engine: {selected_agent})</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
+        with st.expander("🔍 View Live Execution Trace & Tool Call Decisions", expanded=True):
+            render_trace_timeline(res.trace.events)
+            render_sandbox_state_panels(res.state)
+
+    # If side-by-side run has been executed, show side-by-side comparison
+    if "side_by_side" in st.session_state:
+        scen, res_off, res_s1 = st.session_state["side_by_side"]
+        st.markdown(
+            """
+            <div class="font-display" style="font-size: 1.35rem; font-weight: 800; color: var(--ink); margin-top: 1.5rem; margin-bottom: 0.85rem;">
+              SIDE-BY-SIDE EVALUATION: FIREWALL DISABLED VS ENABLED
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        col_off, col_on = st.columns(2)
+        with col_off:
+            st.markdown(
+                """
+                <div class="obsidian-card" style="border-top: 3px solid var(--dye);">
+                  <div class="metric-micro-label" style="color: var(--dye);">MODE: OFF (FIREWALL DISABLED)</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: var(--dye); margin: 0.35rem 0;">
+                    🚨 ATTACK SUCCEEDED
+                  </div>
+                  <p style="font-size: 12px; color: var(--muted);">Without the firewall, the agent obediently follows the injected instruction and exfiltrates private data.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.expander("Trace: Firewall OFF", expanded=True):
+                render_trace_timeline(res_off.trace.events)
+                render_sandbox_state_panels(res_off.state)
+
+        with col_on:
+            st.markdown(
+                """
+                <div class="obsidian-card" style="border-top: 3px solid var(--ok);">
+                  <div class="metric-micro-label" style="color: var(--ok);">MODE: STAGE 2 (AGENT FIREWALL ACTIVE)</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: var(--ok); margin: 0.35rem 0;">
+                    🛡️ ATTACK BLOCKED
+                  </div>
+                  <p style="font-size: 12px; color: var(--muted);">Data provenance engine verified argument was tainted by untrusted webpage and halted execution.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.expander("Trace: Firewall ON", expanded=True):
+                render_trace_timeline(res_s1.trace.events)
+                render_sandbox_state_panels(res_s1.state)
 
     # 4. Policy Matrix with 5-segment privilege meter
     st.markdown(
@@ -214,7 +264,7 @@ def render_dashboard(
                   <span>read-only</span>
                 </td>
                 <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
-                <td>Ã¢â‚¬â€</td>
+                <td>&mdash;</td>
               </tr>
               <tr>
                 <td><code>read_webpage</code></td>
@@ -244,7 +294,7 @@ def render_dashboard(
                   <span>read-only</span>
                 </td>
                 <td><span style="color: var(--ok); font-weight: 600;">allow</span></td>
-                <td>Ã¢â‚¬â€</td>
+                <td>&mdash;</td>
               </tr>
               <tr>
                 <td><code>write_file</code></td>
