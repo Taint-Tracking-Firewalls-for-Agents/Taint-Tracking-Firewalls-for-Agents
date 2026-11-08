@@ -5,18 +5,32 @@ import os
 from pathlib import Path
 import sys
 
-# Ensure src/ is on sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# Ensure repository root, app directory, and src/ are on sys.path
+_app_dir = Path(__file__).resolve().parent
+_repo_root = _app_dir.parent
+
+for _p in [str(_repo_root), str(_app_dir), str(_repo_root / "src")]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import streamlit as st
 
 from agent.scenarios import Scenario, load_scenarios
-from app.styles import apply_theme
-from app.views.agent_monitoring import render_agent_monitoring
-from app.views.dashboard import render_dashboard
-from app.views.event_logs import render_event_logs
-from app.views.settings import render_settings
-from app.views.threat_detection import render_threat_detection
+
+try:
+    from app.styles import apply_theme
+    from app.views.agent_monitoring import render_agent_monitoring
+    from app.views.dashboard import render_dashboard
+    from app.views.event_logs import render_event_logs
+    from app.views.settings import render_settings
+    from app.views.threat_detection import render_threat_detection
+except (ImportError, ModuleNotFoundError):
+    from styles import apply_theme
+    from views.agent_monitoring import render_agent_monitoring
+    from views.dashboard import render_dashboard
+    from views.event_logs import render_event_logs
+    from views.settings import render_settings
+    from views.threat_detection import render_threat_detection
 
 
 @st.cache_data

@@ -7,7 +7,10 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from app.components import render_metric_card
+try:
+    from app.components import render_metric_card
+except (ImportError, ModuleNotFoundError):
+    from components import render_metric_card
 
 
 def render_agent_monitoring(selected_agent: str, firewall_mode: str) -> None:

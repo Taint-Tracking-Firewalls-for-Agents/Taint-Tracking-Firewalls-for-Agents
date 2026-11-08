@@ -6,7 +6,10 @@ from pathlib import Path
 import streamlit as st
 
 from agent.scenarios import Scenario
-from app.components import render_metric_card
+try:
+    from app.components import render_metric_card
+except (ImportError, ModuleNotFoundError):
+    from components import render_metric_card
 
 
 def render_threat_detection(scenarios: list[Scenario]) -> None:
