@@ -41,6 +41,49 @@ def render_event_logs() -> None:
     repo_root = Path(__file__).resolve().parents[2]
 
     session_events: list[dict[str, Any]] = []
+
+    # 1. Collect events from Live Email Inbox (manual runs, dual runs, or continuous auto-shield)
+    if "mail_run_trace" in st.session_state and hasattr(st.session_state["mail_run_trace"], "events"):
+        for ev in st.session_state["mail_run_trace"].events:
+            ev_copy = dict(ev)
+            ev_copy["scenario_id"] = "LIVE_EMAIL"
+            session_events.append(ev_copy)
+
+    if "dual_run" in st.session_state:
+        d = st.session_state["dual_run"]
+        if d.get("scripted", {}).get("trace"):
+            for ev in d["scripted"]["trace"].events:
+                ev_copy = dict(ev)
+                ev_copy["scenario_id"] = "LIVE_EMAIL (SCRIPTED)"
+                session_events.append(ev_copy)
+        if d.get("llm", {}).get("trace"):
+            for ev in d["llm"]["trace"].events:
+                ev_copy = dict(ev)
+                ev_copy["scenario_id"] = "LIVE_EMAIL (LLM)"
+                session_events.append(ev_copy)
+
+    if "inbox_audit_log" in st.session_state:
+        for entry in st.session_state["inbox_audit_log"]:
+            subj = entry.get("email", {}).get("subject", "Email")[:25]
+            scr = entry.get("scripted", {})
+            if scr.get("trace"):
+                for ev in scr["trace"].events:
+                    ev_copy = dict(ev)
+                    ev_copy["scenario_id"] = f"INBOX: {subj} [SCR]"
+                    session_events.append(ev_copy)
+            llm = entry.get("llm", {})
+            if llm.get("trace"):
+                for ev in llm["trace"].events:
+                    ev_copy = dict(ev)
+                    ev_copy["scenario_id"] = f"INBOX: {subj} [LLM]"
+                    session_events.append(ev_copy)
+            if entry.get("trace"):
+                for ev in entry["trace"].events:
+                    ev_copy = dict(ev)
+                    ev_copy["scenario_id"] = f"INBOX: {subj}"
+                    session_events.append(ev_copy)
+
+    # 2. Collect events from single scenario runs on Overview / Break It
     if "single_run" in st.session_state:
         scen, res, _ = st.session_state["single_run"]
         for ev in res.trace.events:
@@ -48,7 +91,19 @@ def render_event_logs() -> None:
             ev_copy["scenario_id"] = scen.id
             session_events.append(ev_copy)
 
-    source_label = "SESSION_TRACE" if session_events else "BENCHMARK_LOG (STAGE_1)"
+    # 3. Collect events from side-by-side scenario runs
+    if "side_by_side" in st.session_state:
+        scen, res_off, res_s1 = st.session_state["side_by_side"]
+        for ev in res_off.trace.events:
+            ev_copy = dict(ev)
+            ev_copy["scenario_id"] = f"{scen.id} (OFF)"
+            session_events.append(ev_copy)
+        for ev in res_s1.trace.events:
+            ev_copy = dict(ev)
+            ev_copy["scenario_id"] = f"{scen.id} (STAGE1)"
+            session_events.append(ev_copy)
+
+    source_label = "LIVE_SESSION (INBOX + BENCHMARK)" if session_events else "BENCHMARK_LOG"
     events_pool = session_events if session_events else get_all_benchmark_events(repo_root)
 
     c1, c2, c3, c4 = st.columns(4)
